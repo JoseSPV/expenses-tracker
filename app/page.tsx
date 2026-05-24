@@ -95,11 +95,19 @@ function groupExpensesByMonth(expenses: Expense[]): MonthGroup[] {
     }));
 }
 
+function getTodayInputValue(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function DailyExpensesApp() {
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [category, setCategory] = useState<string>("");
-  const [customDate, setCustomDate] = useState<string>("");
+  const [customDate, setCustomDate] = useState<string>(getTodayInputValue);
   const [showCategoryDropdown, setShowCategoryDropdown] =
     useState<boolean>(false);
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
@@ -172,7 +180,7 @@ export default function DailyExpensesApp() {
     setAmount("");
     setDescription("");
     setCategory("");
-    setCustomDate("");
+    setCustomDate(getTodayInputValue());
   };
 
   const deleteExpense = (id: number): void => {
