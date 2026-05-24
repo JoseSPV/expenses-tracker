@@ -28,6 +28,73 @@ const CATEGORIAS: string[] = [
 
 const STORAGE_KEY = "daily-expenses-es";
 
+const currencyFormatter = new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: "EUR",
+});
+
+function parseExpenseDate(dateStr: string): Date {
+  const parts = dateStr.split("/");
+  if (parts.length !== 3) return new Date(NaN);
+
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const year = parseInt(parts[2], 10);
+
+  return new Date(year, month, day);
+}
+
+function getMonthKey(dateStr: string): string {
+  const date = parseExpenseDate(dateStr);
+  if (isNaN(date.getTime())) return "unknown";
+
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${date.getFullYear()}-${month}`;
+}
+
+function formatMonthLabel(monthKey: string): string {
+  if (monthKey === "unknown") return "Sin fecha";
+
+  const [year, month] = monthKey.split("-").map(Number);
+  const label = new Intl.DateTimeFormat("es-ES", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(year, month - 1, 1));
+
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+interface MonthGroup {
+  monthKey: string;
+  label: string;
+  expenses: Expense[];
+  total: number;
+}
+
+function groupExpensesByMonth(expenses: Expense[]): MonthGroup[] {
+  const groups = new Map<string, Expense[]>();
+
+  for (const expense of expenses) {
+    const monthKey = getMonthKey(expense.date);
+    const monthExpenses = groups.get(monthKey) ?? [];
+    monthExpenses.push(expense);
+    groups.set(monthKey, monthExpenses);
+  }
+
+  return Array.from(groups.entries())
+    .sort(([a], [b]) => {
+      if (a === "unknown") return 1;
+      if (b === "unknown") return -1;
+      return b.localeCompare(a);
+    })
+    .map(([monthKey, monthExpenses]) => ({
+      monthKey,
+      label: formatMonthLabel(monthKey),
+      expenses: monthExpenses,
+      total: monthExpenses.reduce((sum, expense) => sum + expense.amount, 0),
+    }));
+}
+
 export default function DailyExpensesApp() {
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -138,6 +205,8 @@ export default function DailyExpensesApp() {
     0
   );
 
+  const expensesByMonth = groupExpensesByMonth(filteredExpenses);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 relative">
       <div className="w-full max-w-md space-y-6">
@@ -243,10 +312,7 @@ export default function DailyExpensesApp() {
                 {filterCategories.length > 0 ? "Total filtrado" : "Total"}
               </span>
               <span className="text-lg font-semibold text-gray-900">
-                {new Intl.NumberFormat("es-ES", {
-                  style: "currency",
-                  currency: "EUR",
-                }).format(total)}
+                {currencyFormatter.format(total)}
               </span>
             </div>
 
@@ -308,46 +374,56 @@ export default function DailyExpensesApp() {
               </Button>
             )}
 
-            <div className="space-y-3">
+            <div className="space-y-6">
               {filteredExpenses.length === 0 && (
                 <p className="text-sm text-gray-600">
                   No hay gastos para las categorías seleccionadas
                 </p>
               )}
 
-              {filteredExpenses.map((expense) => (
-                <div
-                  key={expense.id}
-                  className="flex justify-between items-center bg-white rounded-2xl p-3 shadow-sm"
-                >
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      {expense.description}
-                    </p>
-                    <div className="flex gap-2 text-xs text-gray-600">
-                      <span>{expense.date}</span>
-                      {expense.category && (
-                        <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
-                          {expense.category}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-gray-900">
-                      {new Intl.NumberFormat("es-ES", {
-                        style: "currency",
-                        currency: "EUR",
-                      }).format(expense.amount)}
+              {expensesByMonth.map((group) => (
+                <section key={group.monthKey} className="space-y-3">
+                  <div className="flex justify-between items-baseline border-b border-gray-200 pb-2">
+                    <h2 className="text-sm font-semibold text-gray-900">
+                      {group.label}
+                    </h2>
+                    <span className="text-sm font-medium text-gray-700">
+                      {currencyFormatter.format(group.total)}
                     </span>
-                    <button
-                      onClick={() => deleteExpense(expense.id)}
-                      className="text-gray-500 hover:text-red-500 transition"
-                    >
-                      <Trash2 size={18} />
-                    </button>
                   </div>
-                </div>
+
+                  {group.expenses.map((expense) => (
+                    <div
+                      key={expense.id}
+                      className="flex justify-between items-center bg-white rounded-2xl p-3 shadow-sm"
+                    >
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-900">
+                          {expense.description}
+                        </p>
+                        <div className="flex gap-2 text-xs text-gray-600">
+                          <span>{expense.date}</span>
+                          {expense.category && (
+                            <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
+                              {expense.category}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold text-gray-900">
+                          {currencyFormatter.format(expense.amount)}
+                        </span>
+                        <button
+                          onClick={() => deleteExpense(expense.id)}
+                          className="text-gray-500 hover:text-red-500 transition"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </section>
               ))}
             </div>
           </CardContent>
