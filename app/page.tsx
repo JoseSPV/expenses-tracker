@@ -14,7 +14,7 @@ interface Expense {
   date: string;
 }
 
-const CATEGORIAS: string[] = [
+const DEFAULT_CATEGORIAS: string[] = [
   "Restaurantes",
   "Cafeterías",
   "Supermercados",
@@ -27,6 +27,7 @@ const CATEGORIAS: string[] = [
 ];
 
 const STORAGE_KEY = "daily-expenses-es";
+const CATEGORIES_STORAGE_KEY = "daily-expenses-categories-es";
 
 const currencyFormatter = new Intl.NumberFormat("es-ES", {
   style: "currency",
@@ -103,10 +104,35 @@ function getTodayInputValue(): string {
   return `${year}-${month}-${day}`;
 }
 
+function mergeCategories(base: string[], expenses: Expense[]): string[] {
+  const seen = new Set(base.map((cat) => cat.toLowerCase()));
+  const merged = [...base];
+
+  for (const expense of expenses) {
+    const cat = expense.category.trim();
+    if (!cat) continue;
+
+    const key = cat.toLowerCase();
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    merged.push(cat);
+  }
+
+  return merged;
+}
+
+function findExistingCategory(categories: string[], name: string): string | undefined {
+  const key = name.toLowerCase();
+  return categories.find((cat) => cat.toLowerCase() === key);
+}
+
 export default function DailyExpensesApp() {
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [category, setCategory] = useState<string>("");
+  const [newCategoryName, setNewCategoryName] = useState<string>("");
+  const [categories, setCategories] = useState<string[]>([]);
   const [customDate, setCustomDate] = useState<string>(getTodayInputValue);
   const [showCategoryDropdown, setShowCategoryDropdown] =
     useState<boolean>(false);
@@ -114,20 +140,43 @@ export default function DailyExpensesApp() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState<boolean>(false);
+  const [hasHydrated, setHasHydrated] = useState<boolean>(false);
 
   const categoryDropdownRef = useRef<HTMLDivElement | null>(null);
   const filterDropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+
+    let loadedExpenses: Expense[] = [];
+    const storedExpenses = localStorage.getItem(STORAGE_KEY);
+    if (storedExpenses) {
       try {
-        setExpenses(JSON.parse(stored) as Expense[]);
+        loadedExpenses = JSON.parse(storedExpenses) as Expense[];
       } catch {
-        setExpenses([]);
+        loadedExpenses = [];
       }
     }
+
+    let loadedCategories = DEFAULT_CATEGORIAS;
+    const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+    if (storedCategories) {
+      try {
+        const parsed = JSON.parse(storedCategories) as unknown;
+        if (
+          Array.isArray(parsed) &&
+          parsed.every((item) => typeof item === "string")
+        ) {
+          loadedCategories = parsed;
+        }
+      } catch {
+        loadedCategories = DEFAULT_CATEGORIAS;
+      }
+    }
+
+    setExpenses(loadedExpenses);
+    setCategories(mergeCategories(loadedCategories, loadedExpenses));
+    setHasHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -157,9 +206,14 @@ export default function DailyExpensesApp() {
   }, [showFilterDropdown, showCategoryDropdown]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!hasHydrated || typeof window === "undefined") return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
-  }, [expenses]);
+  }, [expenses, hasHydrated]);
+
+  useEffect(() => {
+    if (!hasHydrated || typeof window === "undefined") return;
+    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+  }, [categories, hasHydrated]);
 
   const addExpense = (): void => {
     if (!amount || isNaN(Number(amount))) return;
@@ -202,6 +256,24 @@ export default function DailyExpensesApp() {
   };
 
   const clearFilters = (): void => setFilterCategories([]);
+
+  const addCategory = (): void => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+
+    const existing = findExistingCategory(categories, trimmed);
+    if (existing) {
+      setCategory(existing);
+      setNewCategoryName("");
+      setShowCategoryDropdown(false);
+      return;
+    }
+
+    setCategories((prev) => [...prev, trimmed]);
+    setCategory(trimmed);
+    setNewCategoryName("");
+    setShowCategoryDropdown(false);
+  };
 
   const filteredExpenses: Expense[] =
     filterCategories.length > 0
@@ -285,7 +357,7 @@ export default function DailyExpensesApp() {
                   <div className="my-2 h-px bg-gray-100" />
 
                   <div className="max-h-56 overflow-auto">
-                    {CATEGORIAS.map((cat) => (
+                    {categories.map((cat) => (
                       <button
                         key={cat}
                         type="button"
@@ -302,6 +374,33 @@ export default function DailyExpensesApp() {
                         {cat}
                       </button>
                     ))}
+                  </div>
+
+                  <div className="my-2 h-px bg-gray-100" />
+
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Nueva categoría"
+                      value={newCategoryName}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setNewCategoryName(e.target.value)
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCategory();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addCategory}
+                      className="shrink-0 rounded-2xl"
+                    >
+                      Añadir
+                    </Button>
                   </div>
                 </div>
               )}
@@ -344,7 +443,7 @@ export default function DailyExpensesApp() {
 
               {showFilterDropdown && (
                 <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg z-40 p-3 space-y-2">
-                  {CATEGORIAS.map((cat) => (
+                  {categories.map((cat) => (
                     <label
                       key={cat}
                       className="flex items-center gap-2 text-sm text-gray-700"

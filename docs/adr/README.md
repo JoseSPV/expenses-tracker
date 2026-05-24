@@ -50,11 +50,12 @@ Filter by domain when a task is scoped (e.g. only `auth` ADRs for login work).
 | [0001](./0001-client-only-local-storage.md) | Client-only local-first persistence | accepted | persistence, architecture |
 | [0002](./0002-nextjs-app-router.md) | Next.js App Router as application shell | accepted | framework, architecture |
 | [0003](./0003-no-authentication.md) | No authentication for POC | accepted | auth |
-| [0004](./0004-fixed-expense-categories.md) | Fixed expense category taxonomy | accepted | domain |
+| [0004](./0004-fixed-expense-categories.md) | Fixed expense category taxonomy | superseded | domain |
 | [0005](./0005-expense-domain-model.md) | Expense entity shape | accepted | domain, persistence |
 | [0006](./0006-spanish-locale-and-eur.md) | Spanish locale and EUR currency | accepted | i18n, domain |
 | [0007](./0007-minimal-ui-primitives.md) | Minimal shadcn-style UI primitives | accepted | ui |
 | [0008](./0008-monolithic-page-for-poc.md) | Monolithic page component for POC scope | accepted | architecture |
+| [0009](./0009-user-defined-categories.md) | User-defined expense categories | accepted | domain, persistence |
 
 ## Adding a new ADR
 

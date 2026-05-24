@@ -1,15 +1,16 @@
 ---
 tags: [expenses-tracker, domain]
 title: "ADR-0004: Fixed expense category taxonomy"
-status: accepted
+status: superseded
 date: 2026-05-24
+superseded_by: ADR-0009
 ---
 
 # ADR-0004: Fixed expense category taxonomy
 
 ## Status
 
-accepted
+superseded by [ADR-0009](./0009-user-defined-categories.md)
 
 ## Context
 
