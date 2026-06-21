@@ -4,7 +4,12 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Trash2, ChevronDown } from "lucide-react";
+import { Trash2, ChevronDown, Download } from "lucide-react";
+import {
+  buildMonthSummaryCsv,
+  downloadCsv,
+  getMonthExportFilename,
+} from "../lib/export-month-csv";
 
 interface Expense {
   id: number;
@@ -287,6 +292,11 @@ export default function DailyExpensesApp() {
 
   const expensesByMonth = groupExpensesByMonth(filteredExpenses);
 
+  const exportMonth = (group: MonthGroup): void => {
+    const csv = buildMonthSummaryCsv(group.label, group.expenses);
+    downloadCsv(csv, getMonthExportFilename(group.monthKey));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 relative">
       <div className="w-full max-w-md space-y-6">
@@ -490,13 +500,24 @@ export default function DailyExpensesApp() {
 
               {expensesByMonth.map((group) => (
                 <section key={group.monthKey} className="space-y-3">
-                  <div className="flex justify-between items-baseline border-b border-gray-200 pb-2">
+                  <div className="flex justify-between items-baseline border-b border-gray-200 pb-2 gap-2">
                     <h2 className="text-sm font-semibold text-gray-900">
                       {group.label}
                     </h2>
-                    <span className="text-sm font-medium text-gray-700">
-                      {currencyFormatter.format(group.total)}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => exportMonth(group)}
+                        className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
+                        aria-label={`Exportar ${group.label}`}
+                      >
+                        <Download size={14} />
+                        Exportar
+                      </button>
+                      <span className="text-sm font-medium text-gray-700">
+                        {currencyFormatter.format(group.total)}
+                      </span>
+                    </div>
                   </div>
 
                   {group.expenses.map((expense) => (
