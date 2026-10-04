@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ChangeEvent } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -161,6 +161,110 @@ function findExistingCategory(categories: string[], name: string): string | unde
   return categories.find((cat) => cat.toLowerCase() === key);
 }
 
+interface PersistedState {
+  expenses: Expense[];
+  categories: string[];
+  budgets: CategoryBudgets;
+}
+
+const SERVER_PERSISTED_STATE: PersistedState = {
+  expenses: [],
+  categories: DEFAULT_CATEGORIAS,
+  budgets: {},
+};
+
+let persistedSnapshot = SERVER_PERSISTED_STATE;
+let persistedSnapshotKey: string | null = null;
+const persistedListeners = new Set<() => void>();
+
+function readPersistedState(): PersistedState {
+  if (typeof window === "undefined") return SERVER_PERSISTED_STATE;
+
+  const storedExpenses = localStorage.getItem(STORAGE_KEY);
+  const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+  const storedBudgets = localStorage.getItem(BUDGETS_STORAGE_KEY);
+  const key = `${storedExpenses ?? ""}\n${storedCategories ?? ""}\n${storedBudgets ?? ""}`;
+  if (key === persistedSnapshotKey) return persistedSnapshot;
+
+  let expenses: Expense[] = [];
+  if (storedExpenses) {
+    try {
+      const parsed = JSON.parse(storedExpenses) as unknown;
+      if (Array.isArray(parsed)) expenses = parsed as Expense[];
+    } catch {
+      expenses = [];
+    }
+  }
+
+  let categories = DEFAULT_CATEGORIAS;
+  if (storedCategories) {
+    try {
+      const parsed = JSON.parse(storedCategories) as unknown;
+      if (
+        Array.isArray(parsed) &&
+        parsed.every((item) => typeof item === "string")
+      ) {
+        categories = parsed;
+      }
+    } catch {
+      categories = DEFAULT_CATEGORIAS;
+    }
+  }
+
+  let budgets: CategoryBudgets = {};
+  if (storedBudgets) {
+    try {
+      budgets = parseBudgets(JSON.parse(storedBudgets) as unknown);
+    } catch {
+      budgets = {};
+    }
+  }
+
+  persistedSnapshotKey = key;
+  persistedSnapshot = {
+    expenses,
+    categories: mergeCategories(categories, expenses),
+    budgets,
+  };
+  return persistedSnapshot;
+}
+
+function subscribePersisted(listener: () => void): () => void {
+  persistedListeners.add(listener);
+  return () => {
+    persistedListeners.delete(listener);
+  };
+}
+
+function notifyPersisted(): void {
+  persistedSnapshotKey = null;
+  persistedSnapshot = readPersistedState();
+  persistedListeners.forEach((listener) => listener());
+}
+
+function updateExpenses(updater: (current: Expense[]) => Expense[]): void {
+  const next = updater(readPersistedState().expenses);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  notifyPersisted();
+}
+
+function updateCategories(updater: (current: string[]) => string[]): void {
+  const next = updater(readPersistedState().categories);
+  localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(next));
+  notifyPersisted();
+}
+
+function updateBudgets(
+  updater: (current: CategoryBudgets) => CategoryBudgets,
+): void {
+  const current = readPersistedState().budgets;
+  const next = updater(current);
+  if (next === current) return;
+
+  localStorage.setItem(BUDGETS_STORAGE_KEY, JSON.stringify(next));
+  notifyPersisted();
+}
+
 function monthKeyFromDateInput(isoDate: string): string {
   if (!isoDate) return "unknown";
 
@@ -219,66 +323,22 @@ export default function DailyExpensesApp() {
   const [description, setDescription] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [newCategoryName, setNewCategoryName] = useState<string>("");
-  const [categories, setCategories] = useState<string[]>([]);
   const [customDate, setCustomDate] = useState<string>(getTodayInputValue);
   const [showCategoryDropdown, setShowCategoryDropdown] =
     useState<boolean>(false);
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [budgets, setBudgets] = useState<CategoryBudgets>({});
+  const { expenses, categories, budgets } = useSyncExternalStore(
+    subscribePersisted,
+    readPersistedState,
+    () => SERVER_PERSISTED_STATE,
+  );
   const [budgetDraft, setBudgetDraft] = useState<string | null>(null);
   const [openBudgetMonths, setOpenBudgetMonths] = useState<string[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState<boolean>(false);
-  const [hasHydrated, setHasHydrated] = useState<boolean>(false);
 
   const categoryDropdownRef = useRef<HTMLDivElement | null>(null);
   const filterDropdownRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    let loadedExpenses: Expense[] = [];
-    const storedExpenses = localStorage.getItem(STORAGE_KEY);
-    if (storedExpenses) {
-      try {
-        loadedExpenses = JSON.parse(storedExpenses) as Expense[];
-      } catch {
-        loadedExpenses = [];
-      }
-    }
-
-    let loadedCategories = DEFAULT_CATEGORIAS;
-    const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-    if (storedCategories) {
-      try {
-        const parsed = JSON.parse(storedCategories) as unknown;
-        if (
-          Array.isArray(parsed) &&
-          parsed.every((item) => typeof item === "string")
-        ) {
-          loadedCategories = parsed;
-        }
-      } catch {
-        loadedCategories = DEFAULT_CATEGORIAS;
-      }
-    }
-
-    let loadedBudgets: CategoryBudgets = {};
-    const storedBudgets = localStorage.getItem(BUDGETS_STORAGE_KEY);
-    if (storedBudgets) {
-      try {
-        loadedBudgets = parseBudgets(JSON.parse(storedBudgets) as unknown);
-      } catch {
-        loadedBudgets = {};
-      }
-    }
-
-    setExpenses(loadedExpenses);
-    setCategories(mergeCategories(loadedCategories, loadedExpenses));
-    setBudgets(loadedBudgets);
-    setHasHydrated(true);
-  }, []);
 
   useEffect(() => {
     if (!showFilterDropdown && !showCategoryDropdown) return;
@@ -306,21 +366,6 @@ export default function DailyExpensesApp() {
     };
   }, [showFilterDropdown, showCategoryDropdown]);
 
-  useEffect(() => {
-    if (!hasHydrated || typeof window === "undefined") return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
-  }, [expenses, hasHydrated]);
-
-  useEffect(() => {
-    if (!hasHydrated || typeof window === "undefined") return;
-    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
-  }, [categories, hasHydrated]);
-
-  useEffect(() => {
-    if (!hasHydrated || typeof window === "undefined") return;
-    localStorage.setItem(BUDGETS_STORAGE_KEY, JSON.stringify(budgets));
-  }, [budgets, hasHydrated]);
-
   const selectCategory = (next: string): void => {
     setBudgetDraft(null);
     setCategory(next);
@@ -341,7 +386,7 @@ export default function DailyExpensesApp() {
       date: dateToUse,
     };
 
-    setExpenses((prev) => [newExpense, ...prev]);
+    updateExpenses((prev) => [newExpense, ...prev]);
     setAmount("");
     setDescription("");
     selectCategory("");
@@ -349,12 +394,11 @@ export default function DailyExpensesApp() {
   };
 
   const deleteExpense = (id: number): void => {
-    setExpenses((prev) => prev.filter((expense) => expense.id !== id));
+    updateExpenses((prev) => prev.filter((expense) => expense.id !== id));
   };
 
   const confirmClearAll = (): void => {
-    setExpenses([]);
-    localStorage.removeItem(STORAGE_KEY);
+    updateExpenses(() => []);
     setShowConfirmModal(false);
   };
 
@@ -371,7 +415,7 @@ export default function DailyExpensesApp() {
   const updateCategoryBudget = (categoryName: string, raw: string): void => {
     const value = budgetFromInput(raw);
 
-    setBudgets((prev) => {
+    updateBudgets((prev) => {
       if (value === null) {
         if (!(categoryName in prev)) return prev;
         const next = { ...prev };
@@ -404,7 +448,7 @@ export default function DailyExpensesApp() {
       return;
     }
 
-    setCategories((prev) => [...prev, trimmed]);
+    updateCategories((prev) => [...prev, trimmed]);
     selectCategory(trimmed);
     setNewCategoryName("");
     setShowCategoryDropdown(false);
