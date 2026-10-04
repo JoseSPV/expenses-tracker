@@ -4,7 +4,17 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Trash2, ChevronDown, Download } from "lucide-react";
+import { Trash2, ChevronDown, Download, Wallet } from "lucide-react";
+import {
+  budgetFromInput,
+  budgetStatus,
+  monthBudgetRows,
+  parseBudgets,
+  spentInMonth,
+  worstBudgetStatus,
+  type BudgetStatus,
+  type CategoryBudgets,
+} from "../lib/category-budget";
 import {
   buildMonthSummaryCsv,
   downloadCsv,
@@ -33,6 +43,25 @@ const DEFAULT_CATEGORIAS: string[] = [
 
 const STORAGE_KEY = "daily-expenses-es";
 const CATEGORIES_STORAGE_KEY = "daily-expenses-categories-es";
+const BUDGETS_STORAGE_KEY = "daily-expenses-budgets-es";
+
+const BUDGET_STATUS_LABEL: Record<BudgetStatus, string> = {
+  ok: "dentro del presupuesto",
+  warning: "cerca del límite",
+  over: "presupuesto superado",
+};
+
+const BUDGET_STATUS_TEXT: Record<BudgetStatus, string> = {
+  ok: "text-green-600",
+  warning: "text-orange-500",
+  over: "text-red-600",
+};
+
+const BUDGET_STATUS_BAR: Record<BudgetStatus, string> = {
+  ok: "bg-green-600",
+  warning: "bg-orange-500",
+  over: "bg-red-600",
+};
 
 const currencyFormatter = new Intl.NumberFormat("es-ES", {
   style: "currency",
@@ -132,6 +161,59 @@ function findExistingCategory(categories: string[], name: string): string | unde
   return categories.find((cat) => cat.toLowerCase() === key);
 }
 
+function monthKeyFromDateInput(isoDate: string): string {
+  if (!isoDate) return "unknown";
+
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return "unknown";
+
+  return getMonthKey(date.toLocaleDateString("es-ES"));
+}
+
+function budgetMonthPhrase(label: string): string {
+  return label.charAt(0).toLocaleLowerCase("es") + label.slice(1);
+}
+
+function BudgetProgress({
+  spent,
+  budget,
+  status,
+  title,
+}: {
+  spent: number;
+  budget: number;
+  status: BudgetStatus;
+  title?: string;
+}) {
+  const fill = Math.min(Math.max(spent, 0) / budget, 1) * 100;
+  const amounts = `${currencyFormatter.format(spent)} de ${currencyFormatter.format(budget)}`;
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-baseline justify-between gap-3">
+        {title ? <span className="text-xs text-gray-700">{title}</span> : null}
+        <p
+          className={`text-xs font-medium ${BUDGET_STATUS_TEXT[status]} ${
+            title ? "shrink-0" : ""
+          }`}
+        >
+          {amounts}
+          <span className="sr-only">, {BUDGET_STATUS_LABEL[status]}</span>
+        </p>
+      </div>
+      <div
+        className="h-1.5 overflow-hidden rounded-full bg-gray-100"
+        aria-hidden="true"
+      >
+        <div
+          className={`h-full rounded-full ${BUDGET_STATUS_BAR[status]}`}
+          style={{ width: `${fill}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function DailyExpensesApp() {
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -143,6 +225,9 @@ export default function DailyExpensesApp() {
     useState<boolean>(false);
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [budgets, setBudgets] = useState<CategoryBudgets>({});
+  const [budgetDraft, setBudgetDraft] = useState<string | null>(null);
+  const [openBudgetMonths, setOpenBudgetMonths] = useState<string[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState<boolean>(false);
   const [hasHydrated, setHasHydrated] = useState<boolean>(false);
@@ -179,8 +264,19 @@ export default function DailyExpensesApp() {
       }
     }
 
+    let loadedBudgets: CategoryBudgets = {};
+    const storedBudgets = localStorage.getItem(BUDGETS_STORAGE_KEY);
+    if (storedBudgets) {
+      try {
+        loadedBudgets = parseBudgets(JSON.parse(storedBudgets) as unknown);
+      } catch {
+        loadedBudgets = {};
+      }
+    }
+
     setExpenses(loadedExpenses);
     setCategories(mergeCategories(loadedCategories, loadedExpenses));
+    setBudgets(loadedBudgets);
     setHasHydrated(true);
   }, []);
 
@@ -220,6 +316,16 @@ export default function DailyExpensesApp() {
     localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
   }, [categories, hasHydrated]);
 
+  useEffect(() => {
+    if (!hasHydrated || typeof window === "undefined") return;
+    localStorage.setItem(BUDGETS_STORAGE_KEY, JSON.stringify(budgets));
+  }, [budgets, hasHydrated]);
+
+  const selectCategory = (next: string): void => {
+    setBudgetDraft(null);
+    setCategory(next);
+  };
+
   const addExpense = (): void => {
     if (!amount || isNaN(Number(amount))) return;
 
@@ -238,7 +344,7 @@ export default function DailyExpensesApp() {
     setExpenses((prev) => [newExpense, ...prev]);
     setAmount("");
     setDescription("");
-    setCategory("");
+    selectCategory("");
     setCustomDate(getTodayInputValue());
   };
 
@@ -262,20 +368,44 @@ export default function DailyExpensesApp() {
 
   const clearFilters = (): void => setFilterCategories([]);
 
+  const updateCategoryBudget = (categoryName: string, raw: string): void => {
+    const value = budgetFromInput(raw);
+
+    setBudgets((prev) => {
+      if (value === null) {
+        if (!(categoryName in prev)) return prev;
+        const next = { ...prev };
+        delete next[categoryName];
+        return next;
+      }
+
+      if (prev[categoryName] === value) return prev;
+      return { ...prev, [categoryName]: value };
+    });
+  };
+
+  const toggleBudgetMonth = (monthKey: string): void => {
+    setOpenBudgetMonths((prev) =>
+      prev.includes(monthKey)
+        ? prev.filter((key) => key !== monthKey)
+        : [...prev, monthKey],
+    );
+  };
+
   const addCategory = (): void => {
     const trimmed = newCategoryName.trim();
     if (!trimmed) return;
 
     const existing = findExistingCategory(categories, trimmed);
     if (existing) {
-      setCategory(existing);
+      selectCategory(existing);
       setNewCategoryName("");
       setShowCategoryDropdown(false);
       return;
     }
 
     setCategories((prev) => [...prev, trimmed]);
-    setCategory(trimmed);
+    selectCategory(trimmed);
     setNewCategoryName("");
     setShowCategoryDropdown(false);
   };
@@ -291,6 +421,24 @@ export default function DailyExpensesApp() {
   );
 
   const expensesByMonth = groupExpensesByMonth(filteredExpenses);
+
+  const budgetExpenses = expenses.map((expense) => ({
+    amount: expense.amount,
+    category: expense.category.trim(),
+    monthKey: getMonthKey(expense.date),
+  }));
+
+  const selectedBudget = category ? budgets[category] : undefined;
+  const formMonthKey = monthKeyFromDateInput(customDate);
+  const pendingAmount =
+    amount.trim() !== "" && !Number.isNaN(Number(amount)) ? Number(amount) : 0;
+  const formSpent = category
+    ? spentInMonth(budgetExpenses, formMonthKey, category) + pendingAmount
+    : 0;
+  const formStatus =
+    selectedBudget !== undefined
+      ? budgetStatus(formSpent, selectedBudget)
+      : null;
 
   const exportMonth = (group: MonthGroup): void => {
     const csv = buildMonthSummaryCsv(group.label, group.expenses);
@@ -354,7 +502,7 @@ export default function DailyExpensesApp() {
                   <button
                     type="button"
                     onClick={() => {
-                      setCategory("");
+                      selectCategory("");
                       setShowCategoryDropdown(false);
                     }}
                     className={`w-full text-left rounded-xl px-3 py-2 text-sm transition-colors hover:bg-gray-50 ${
@@ -372,7 +520,7 @@ export default function DailyExpensesApp() {
                         key={cat}
                         type="button"
                         onClick={() => {
-                          setCategory(cat);
+                          selectCategory(cat);
                           setShowCategoryDropdown(false);
                         }}
                         className={`w-full text-left rounded-xl px-3 py-2 text-sm transition-colors hover:bg-gray-50 ${
@@ -415,6 +563,41 @@ export default function DailyExpensesApp() {
                 </div>
               )}
             </div>
+
+            {category && (
+              <div className="space-y-2">
+                <label
+                  htmlFor="category-budget"
+                  className="block text-xs text-gray-700"
+                >
+                  Presupuesto mensual
+                </label>
+                <Input
+                  id="category-budget"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={
+                    budgetDraft ??
+                    (selectedBudget !== undefined ? String(selectedBudget) : "")
+                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    const raw = e.target.value;
+                    setBudgetDraft(raw);
+                    updateCategoryBudget(category, raw);
+                  }}
+                  onBlur={() => setBudgetDraft(null)}
+                />
+                {selectedBudget !== undefined && formStatus && (
+                  <BudgetProgress
+                    spent={formSpent}
+                    budget={selectedBudget}
+                    status={formStatus}
+                  />
+                )}
+              </div>
+            )}
 
             <Button onClick={addExpense} className="w-full rounded-2xl">
               Añadir gasto
@@ -498,27 +681,62 @@ export default function DailyExpensesApp() {
                 </p>
               )}
 
-              {expensesByMonth.map((group) => (
+              {expensesByMonth.map((group) => {
+                const budgetRows = monthBudgetRows(
+                  budgetExpenses,
+                  group.monthKey,
+                  budgets,
+                );
+                const monthStatus = worstBudgetStatus(budgetRows);
+                const budgetOpen = openBudgetMonths.includes(group.monthKey);
+                const budgetPanelId = `presupuesto-${group.monthKey}`;
+
+                return (
                 <section key={group.monthKey} className="space-y-3">
                   <div className="flex justify-between items-baseline border-b border-gray-200 pb-2 gap-2">
                     <h2 className="text-sm font-semibold text-gray-900">
                       {group.label}
                     </h2>
                     <div className="flex items-center gap-2 shrink-0">
+                      {monthStatus && (
+                        <button
+                          type="button"
+                          onClick={() => toggleBudgetMonth(group.monthKey)}
+                          aria-expanded={budgetOpen}
+                          aria-controls={budgetPanelId}
+                          aria-label={`Presupuesto de ${budgetMonthPhrase(group.label)}: ${BUDGET_STATUS_LABEL[monthStatus]}`}
+                          className={`rounded-lg p-1 transition hover:bg-gray-100 ${BUDGET_STATUS_TEXT[monthStatus]}`}
+                        >
+                          <Wallet size={14} />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => exportMonth(group)}
-                        className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
+                        className="rounded-lg p-1 text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
                         aria-label={`Exportar ${group.label}`}
                       >
                         <Download size={14} />
-                        Exportar
                       </button>
                       <span className="text-sm font-medium text-gray-700">
                         {currencyFormatter.format(group.total)}
                       </span>
                     </div>
                   </div>
+
+                  {budgetOpen && monthStatus && (
+                    <div id={budgetPanelId} className="space-y-3">
+                      {budgetRows.map((row) => (
+                        <BudgetProgress
+                          key={row.category}
+                          title={row.category}
+                          spent={row.spent}
+                          budget={row.budget}
+                          status={row.status}
+                        />
+                      ))}
+                    </div>
+                  )}
 
                   {group.expenses.map((expense) => (
                     <div
@@ -552,7 +770,8 @@ export default function DailyExpensesApp() {
                     </div>
                   ))}
                 </section>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
