@@ -1,26 +1,86 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --surface-2: #eff1f6;
+  --border: #e3e6ee;
+  --text: #121826;
+  --muted: #667085;
+  --primary: #4f46e5;
+  --primary-contrast: #ffffff;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.05), 0 4px 16px rgb(16 24 40 / 0.04);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #0d111a;
+  --surface: #151b27;
+  --surface-2: #1d2434;
+  --border: #273043;
+  --text: #e7eaf0;
+  --muted: #94a0b8;
+  --primary: #818cf8;
+  --primary-contrast: #0d111a;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --shadow: none;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg: var(--text);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-contrast);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --shadow-card: var(--shadow);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  dialog::backdrop {
+    background: rgb(10 14 22 / 0.5);
+    backdrop-filter: blur(2px);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@utility animate-fade-in {
+  animation: fade-in 0.2s ease;
 }

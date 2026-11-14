@@ -1,28 +1,20 @@
-import * as React from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export type CardProps = React.HTMLAttributes<HTMLDivElement>;
-
-export function Card({ className, ...props }: CardProps) {
+export function Card({ className, ...props }: HTMLAttributes<HTMLElement>) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-gray-200 bg-white text-gray-900 shadow-sm",
-        className
-      )}
+    <article
+      className={cn("min-w-0 rounded-2xl border bg-surface p-5 shadow-card", className)}
       {...props}
     />
   );
 }
 
-export type CardContentProps = React.HTMLAttributes<HTMLDivElement>;
-
-export function CardContent({ className, ...props }: CardContentProps) {
+export function CardHeader({ title, action }: { title: string; action?: ReactNode }) {
   return (
-    <div
-      className={cn("p-4", className)}
-      {...props}
-    />
+    <header className="mb-4 flex items-center justify-between gap-3">
+      <h2 className="text-base font-semibold">{title}</h2>
+      {action}
+    </header>
   );
 }
-

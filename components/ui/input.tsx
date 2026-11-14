@@ -1,23 +1,25 @@
-import * as React from "react";
+import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
+const CONTROL =
+  "h-10 w-full rounded-[10px] border bg-bg px-3 text-[15px] text-fg placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-50";
 
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type = "text", ...props }, ref) => {
-    return (
-      <input
-        ref={ref}
-        type={type}
-        className={cn(
-          "flex h-10 w-full rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        )}
-        {...props}
-      />
-    );
-  }
-);
+export function Input({ className, type = "text", ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  return <input type={type} className={cn(CONTROL, type === "color" && "w-18 p-1", className)} {...props} />;
+}
 
-Input.displayName = "Input";
+export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select className={cn(CONTROL, className)} {...props} />;
+}
 
+export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-muted">
+      <span>
+        {label}
+        {hint ? <small className="font-normal"> · {hint}</small> : null}
+      </span>
+      {children}
+    </label>
+  );
+}

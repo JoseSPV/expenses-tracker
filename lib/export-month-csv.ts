@@ -1,68 +1,44 @@
-const CSV_DELIMITER = ";";
-
-interface ExpenseLike {
-  amount: number;
-  category: string;
+export interface MonthSummaryCsvOptions {
+  labels: { month: string; category: string; total: string; grandTotal: string };
+  delimiter: string;
+  decimalSeparator: string;
+  /** BCP 47 tag used to sort category names. */
+  collation: string;
 }
 
-interface CategorySummary {
+export interface CategoryTotal {
   category: string;
   total: number;
 }
 
-function escapeCsvField(value: string): string {
-  if (
-    value.includes(CSV_DELIMITER) ||
-    value.includes('"') ||
-    value.includes("\n")
-  ) {
+function escapeField(value: string, delimiter: string): string {
+  if (value.includes(delimiter) || value.includes('"') || value.includes("\n")) {
     return `"${value.replace(/"/g, '""')}"`;
   }
   return value;
 }
 
-function formatAmountForCsv(amount: number): string {
-  return amount.toFixed(2).replace(".", ",");
-}
-
-export function groupExpensesByCategory(
-  expenses: ExpenseLike[]
-): CategorySummary[] {
-  const groups = new Map<string, number>();
-
-  for (const expense of expenses) {
-    const category = expense.category.trim() || "Sin categoría";
-    groups.set(category, (groups.get(category) ?? 0) + expense.amount);
-  }
-
-  return Array.from(groups.entries())
-    .sort(([a], [b]) => {
-      if (a === "Sin categoría") return 1;
-      if (b === "Sin categoría") return -1;
-      return a.localeCompare(b, "es");
-    })
-    .map(([category, total]) => ({ category, total }));
-}
-
+/** Monthly expense summary: one row per category, alphabetical, plus a grand total. */
 export function buildMonthSummaryCsv(
   monthLabel: string,
-  expenses: ExpenseLike[]
+  rows: CategoryTotal[],
+  { labels, delimiter, decimalSeparator, collation }: MonthSummaryCsvOptions,
 ): string {
-  const summaries = groupExpensesByCategory(expenses);
-  const grandTotal = summaries.reduce((sum, item) => sum + item.total, 0);
+  const field = (value: string) => escapeField(value, delimiter);
+  const amount = (value: number) => value.toFixed(2).replace(".", decimalSeparator);
+  const sorted = [...rows].sort((a, b) => a.category.localeCompare(b.category, collation));
+  const grandTotal = sorted.reduce((total, row) => total + row.total, 0);
 
   const lines = [
-    `${escapeCsvField("Mes")}${CSV_DELIMITER}${escapeCsvField(monthLabel)}`,
+    `${field(labels.month)}${delimiter}${field(monthLabel)}`,
     "",
-    `${escapeCsvField("Categoría")}${CSV_DELIMITER}${escapeCsvField("Total")}`,
-    ...summaries.map(
-      ({ category, total }) =>
-        `${escapeCsvField(category)}${CSV_DELIMITER}${formatAmountForCsv(total)}`
-    ),
+    `${field(labels.category)}${delimiter}${field(labels.total)}`,
+    ...sorted.map((row) => `${field(row.category)}${delimiter}${amount(row.total)}`),
     "",
-    `${escapeCsvField("TOTAL")}${CSV_DELIMITER}${formatAmountForCsv(grandTotal)}`,
+    `${field(labels.grandTotal)}${delimiter}${amount(grandTotal)}`,
   ];
 
+  // The BOM makes Excel open the file as UTF-8.
   return `\uFEFF${lines.join("\n")}`;
 }
 
@@ -74,8 +50,4 @@ export function downloadCsv(content: string, filename: string): void {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
-}
-
-export function getMonthExportFilename(monthKey: string): string {
-  return `gastos-${monthKey}.csv`;
 }
