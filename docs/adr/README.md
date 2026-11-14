@@ -51,11 +51,15 @@ Filter by domain when a task is scoped (e.g. only `auth` ADRs for login work).
 | [0002](./0002-nextjs-app-router.md) | Next.js App Router as application shell | accepted | framework, architecture |
 | [0003](./0003-no-authentication.md) | No authentication for POC | accepted | auth |
 | [0004](./0004-fixed-expense-categories.md) | Fixed expense category taxonomy | superseded | domain |
-| [0005](./0005-expense-domain-model.md) | Expense entity shape | accepted | domain, persistence |
-| [0006](./0006-spanish-locale-and-eur.md) | Spanish locale and EUR currency | accepted | i18n, domain |
-| [0007](./0007-minimal-ui-primitives.md) | Minimal shadcn-style UI primitives | accepted | ui |
-| [0008](./0008-monolithic-page-for-poc.md) | Monolithic page component for POC scope | accepted | architecture |
-| [0009](./0009-user-defined-categories.md) | User-defined expense categories | accepted | domain, persistence |
+| [0005](./0005-expense-domain-model.md) | Expense entity shape | superseded | domain, persistence |
+| [0006](./0006-spanish-locale-and-eur.md) | Spanish locale and EUR currency | superseded | i18n, domain |
+| [0007](./0007-minimal-ui-primitives.md) | Minimal shadcn-style UI primitives | superseded | ui |
+| [0008](./0008-monolithic-page-for-poc.md) | Monolithic page component for POC scope | superseded | architecture |
+| [0009](./0009-user-defined-categories.md) | User-defined expense categories | superseded | domain, persistence |
+| [0010](./0010-app-router-i18n.md) | Locale routing and dictionaries with the App Router | accepted | i18n, framework |
+| [0011](./0011-feature-modules-and-routes.md) | Feature modules, one route per section | accepted | architecture |
+| [0012](./0012-domain-model-v1.md) | Domain model v1 and legacy data migration | accepted | domain, persistence |
+| [0013](./0013-design-tokens-and-theming.md) | Design tokens, theming and UI primitives | accepted | ui |
 
 ## Adding a new ADR
 

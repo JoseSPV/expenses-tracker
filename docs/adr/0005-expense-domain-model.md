@@ -1,15 +1,16 @@
 ---
 tags: [expenses-tracker, domain, persistence]
 title: "ADR-0005: Expense entity shape"
-status: accepted
+status: superseded
 date: 2026-05-24
+superseded_by: ADR-0012
 ---
 
 # ADR-0005: Expense entity shape
 
 ## Status
 
-accepted
+superseded by [ADR-0012](./0012-domain-model-v1.md)
 
 ## Context
 

@@ -1,5 +1,7 @@
 # Spec: Category budgets
 
+> **Superseded** by [ADR-0012](../adr/0012-domain-model-v1.md). The budget model is unchanged (one monthly limit per category), but budgets are now edited on the Budgets page, keyed by category id, exactly 100% counts as a warning, and the month-header icon was replaced by the Budgets page.
+
 ## Objective
 
 A personal Spanish EUR tracker. The user sets one monthly budget per category and sees how close spending is, without the app blocking or changing how an expense is saved.

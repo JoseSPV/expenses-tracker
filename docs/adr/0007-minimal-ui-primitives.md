@@ -1,15 +1,16 @@
 ---
 tags: [expenses-tracker, ui]
 title: "ADR-0007: Minimal shadcn-style UI primitives"
-status: accepted
+status: superseded
 date: 2026-05-24
+superseded_by: ADR-0013
 ---
 
 # ADR-0007: Minimal shadcn-style UI primitives
 
 ## Status
 
-accepted
+superseded by [ADR-0013](./0013-design-tokens-and-theming.md)
 
 ## Context
 

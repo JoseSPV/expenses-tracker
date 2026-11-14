@@ -1,15 +1,16 @@
 ---
 tags: [expenses-tracker, architecture]
 title: "ADR-0008: Monolithic page component for POC scope"
-status: accepted
+status: superseded
 date: 2026-05-24
+superseded_by: ADR-0011
 ---
 
 # ADR-0008: Monolithic page component for POC scope
 
 ## Status
 
-accepted
+superseded by [ADR-0011](./0011-feature-modules-and-routes.md)
 
 ## Context
 

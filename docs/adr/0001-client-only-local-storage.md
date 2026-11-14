@@ -21,10 +21,9 @@ The app has no backend, no database, and no sync requirements at this stage. Dat
 
 Persist all expense data **client-side only**, using the browser's `localStorage` API.
 
-- Storage key: `daily-expenses-es`
-- Format: JSON-serialized array of `Expense` objects
-- Load on mount; save on every `expenses` state change
-- "Clear all" removes the storage key explicitly
+- Storage key: `expenses-tracker:data:v1` — one versioned JSON document (shape and migration from the original `daily-expenses-*` keys in [ADR-0012](./0012-domain-model-v1.md))
+- Read through `useSyncExternalStore`; every action writes the whole document
+- "Clear transactions" empties the transaction list only
 
 There is no server, no API layer, and no cross-device sync in the POC.
 
@@ -40,7 +39,7 @@ There is no server, no API layer, and no cross-device sync in the POC.
 ### Negative
 
 - Data is tied to one browser on one device; clearing site data loses everything
-- No backup, export, or multi-device sync
+- No backup or multi-device sync (CSV export is a monthly summary, not a backup)
 - `localStorage` has a ~5 MB limit (unlikely to hit for daily expenses, but a hard ceiling)
 - No server-side validation or audit trail
 

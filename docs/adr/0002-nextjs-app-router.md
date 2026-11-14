@@ -21,12 +21,13 @@ The current feature set is a single screen. The framework choice should not over
 
 Use **Next.js 16 with the App Router** (`app/` directory) as the application shell.
 
-- `app/layout.tsx` — root layout, fonts, metadata
-- `app/page.tsx` — main (and only) feature page
-- `app/globals.css` — Tailwind v4 entry and theme tokens
+- `app/[lang]/layout.tsx` — root layout per locale: fonts, metadata, theme script, providers ([ADR-0010](./0010-app-router-i18n.md))
+- `app/[lang]/<section>/page.tsx` — one thin server page per section ([ADR-0011](./0011-feature-modules-and-routes.md))
+- `proxy.ts` — redirects paths without a locale prefix
+- `app/globals.css` — Tailwind v4 entry and theme tokens ([ADR-0013](./0013-design-tokens-and-theming.md))
 - Path alias `@/*` maps to project root
 
-The entire feature currently runs as a `"use client"` component. No API routes, Server Actions, or server components are used for data yet.
+Pages and metadata are server components and statically generated; the feature views are client components because data lives in `localStorage` (ADR-0001). No API routes or Server Actions yet.
 
 Next.js is chosen for build tooling, deployment ergonomics, and future server capabilities — not because the POC requires SSR today.
 
@@ -42,8 +43,7 @@ Next.js is chosen for build tooling, deployment ergonomics, and future server ca
 ### Negative
 
 - Framework bundle overhead for what is effectively a client SPA
-- `"use client"` on the main page opts out of most SSR benefits for that route
-- Layout metadata (`title`, `description`, `lang`) is still scaffold defaults — product branding not yet applied
+- Client-side data means pages prerender only a skeleton; content appears after hydration
 
 ## Alternatives considered
 

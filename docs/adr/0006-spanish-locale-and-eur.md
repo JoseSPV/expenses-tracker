@@ -1,15 +1,16 @@
 ---
 tags: [expenses-tracker, i18n, domain]
 title: "ADR-0006: Spanish locale and EUR currency"
-status: accepted
+status: superseded
 date: 2026-05-24
+superseded_by: ADR-0010
 ---
 
 # ADR-0006: Spanish locale and EUR currency
 
 ## Status
 
-accepted
+superseded by [ADR-0010](./0010-app-router-i18n.md)
 
 ## Context
 

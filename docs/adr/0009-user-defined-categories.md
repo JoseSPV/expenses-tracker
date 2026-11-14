@@ -1,16 +1,17 @@
 ---
 tags: [expenses-tracker, domain, persistence]
 title: "ADR-0009: User-defined expense categories"
-status: accepted
+status: superseded
 date: 2026-05-24
 supersedes: ADR-0004
+superseded_by: ADR-0012
 ---
 
 # ADR-0009: User-defined expense categories
 
 ## Status
 
-accepted — supersedes [ADR-0004](./0004-fixed-expense-categories.md)
+superseded by [ADR-0012](./0012-domain-model-v1.md) (originally superseded [ADR-0004](./0004-fixed-expense-categories.md))
 
 ## Context
 

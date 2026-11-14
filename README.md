@@ -1,20 +1,76 @@
 # expenses-tracker
 
-Personal daily expense tracker built with Next.js. Spanish UI, EUR currency, client-side persistence via `localStorage`.
+**Joenance** — a personal finance app built with Next.js. Track daily expenses and income, set monthly budgets per category, save towards goals, follow recurring bills and net worth, and run quick financial calculators.
 
-See [docs/adr/](./docs/adr/) for the full ADR index and format reference.
+Spanish UI, EUR currency, no account: all data lives in the browser's `localStorage`.
 
-## Getting Started
+- **User guide (Spanish):** [docs/user-guide.md](./docs/user-guide.md)
+- **Architecture decisions:** [docs/adr/](./docs/adr/)
 
-First, run the development server:
+## Features
+
+| Section | Route | What it does |
+| --- | --- | --- |
+| Resumen | `/es` | Monthly KPIs, spending by category, 6-month income vs. expenses, budget/bill/goal highlights |
+| Movimientos | `/es/transactions` | Add, edit, search and filter transactions; export the month's expense summary as CSV |
+| Presupuestos | `/es/budgets` | Monthly limit per category, expected-pace marker, daily allowance |
+| Objetivos | `/es/goals` | Savings goals with deadlines, contributions and required monthly saving |
+| Recibos | `/es/bills` | Recurring bills and income; "mark paid" logs the transaction and advances the due date |
+| Patrimonio | `/es/net-worth` | Assets, liabilities and monthly net-worth history |
+| Calculadoras | `/es/calculators` | Compound interest, loan payment, emergency fund |
+| Categorías | `/es/categories` | Create, rename, recolor and delete categories (with reassignment) |
+
+Light and dark themes, responsive layout (bottom navigation on mobile).
+
+## Getting started
+
+Requires Node.js 20.9 or later.
 
 ```bash
+npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). It redirects to `/es`. On first load the app seeds six months of demo data, or migrates data from the previous version if it finds it (see [ADR-0012](./docs/adr/0012-domain-model-v1.md)).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Development server (Turbopack) |
+| `npm run build` | Production build; also type-checks |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint |
+
+There is no test runner yet.
+
+## Stack
+
+Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, `lucide-react`. No UI, chart, state or i18n libraries — see [ADR-0013](./docs/adr/0013-design-tokens-and-theming.md).
+
+## Project structure
+
+```
+app/[lang]/              → root layout per locale and one thin page per section
+features/<section>/      → client views and dialogs for each section
+components/ui/           → primitives: Button, Card, Input, Dialog, Progress, Toast…
+components/charts/       → SVG bar, line and donut charts
+components/layout/       → app shell, navigation, month picker context, theme
+lib/domain/              → pure business rules: types, dates, selectors, budgets, finance math
+lib/store/               → localStorage store, actions, demo seed, legacy migration
+i18n/                    → locale config, dictionaries, formatters, provider
+proxy.ts                 → redirects paths without a locale prefix
+```
+
+Dependencies flow one way: `app` → `features` → `components` / `lib`. Views read data with `useAppData()` and write through `lib/store/actions.ts`; nothing else touches `localStorage`. Details in [ADR-0011](./docs/adr/0011-feature-modules-and-routes.md).
+
+## Internationalization
+
+Locales use the App Router pattern: a `[lang]` segment, JSON dictionaries and `Intl` formatters, with no library ([ADR-0010](./docs/adr/0010-app-router-i18n.md)). Spanish is the only locale today. To add one:
+
+1. Add the code to `locales` and `formattingLocale` in `i18n/config.ts`.
+2. Copy `i18n/dictionaries/es.json` to `<code>.json` and translate it. TypeScript reports missing keys.
+3. Load it in `i18n/get-dictionary.ts`.
+
+Never hardcode UI text or call `toLocaleString` in components. Use `dict` and `format` from `useI18n()`.
 
 ## Architecture Decision Records
 
@@ -62,8 +118,6 @@ When working through a new decision with AI:
 
 Once an ADR is accepted, implementation follows the decision — the AI's job is to build, not reinvent direction.
 
-## Deploy on Vercel
+## Deploy
 
-The easiest way to deploy this Next.js app is the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
-
-See the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for details.
+Any Next.js host works; [Vercel](https://vercel.com/new) is the simplest. The app has no environment variables or backend. See the [Next.js deployment docs](https://nextjs.org/docs/app/getting-started/deploying).
