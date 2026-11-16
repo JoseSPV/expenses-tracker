@@ -7,6 +7,18 @@ const pad = (n: number) => String(n).padStart(2, "0");
 export const toISO = (date: Date): ISODate =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
+/**
+ * Normalizes `Y-M-D` to `YYYY-MM-DD`. A 1- or 2-digit year is expanded (26 → 2026).
+ * Anything else is returned unchanged.
+ */
+export function canonicalizeDate(value: string): string {
+  const match = /^(\d{1,4})-(\d{1,2})-(\d{1,2})$/.exec(value.trim());
+  if (!match) return value;
+  let year = Number(match[1]);
+  if (year < 100) year += year < 70 ? 2000 : 1900;
+  return `${year}-${pad(Number(match[2]))}-${pad(Number(match[3]))}`;
+}
+
 export const today = (): ISODate => toISO(new Date());
 
 export const monthKey = (iso: ISODate): MonthKey => iso.slice(0, 7);
@@ -35,6 +47,15 @@ export function addMonths(month: MonthKey, n: number): MonthKey {
 export function daysInMonth(month: MonthKey): number {
   const [y, m] = month.split("-").map(Number);
   return new Date(y, m, 0).getDate();
+}
+
+/** True only for a real calendar day, so `2026-02-31` never gets stored. */
+export function isISODate(value: string): value is ISODate {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const month = Number(value.slice(5, 7));
+  const day = Number(value.slice(8, 10));
+  if (month < 1 || month > 12 || day < 1) return false;
+  return day <= daysInMonth(value.slice(0, 7));
 }
 
 /** The given day in `month`, clamped to the month's last day. */

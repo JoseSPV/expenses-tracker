@@ -51,7 +51,7 @@ export function BillsView() {
       <KpiGrid>
         <Kpi label={text.fixedCosts} value={format.money(monthlyCost)} hint={text.fixedCostsHint} />
         <Kpi label={text.recurringIncome} value={format.money(monthlyIncome)} tone="positive" />
-        <Kpi label={text.committed} value={format.percent(monthlyIncome ? monthlyCost / monthlyIncome : 0)} hint={text.committedHint} />
+        <Kpi label={text.committed} value={monthlyIncome ? format.percent(monthlyCost / monthlyIncome) : "—"} hint={text.committedHint} />
         <Kpi label={text.dueSoon} value={format.money(sum(dueSoon, (r) => r.amount))} hint={format.plural(text.dueSoonHint, dueSoon.length)} />
       </KpiGrid>
 
@@ -68,7 +68,47 @@ export function BillsView() {
         {items.length === 0 ? (
           <EmptyState>{text.empty}</EmptyState>
         ) : (
-          <div className="-mx-5 overflow-x-auto px-5">
+          <>
+            <ul className="flex flex-col gap-4 md:hidden">
+              {items.map((item) => {
+                const category = categoryOrPlaceholder(data, item.categoryId, dict.common.uncategorized);
+                const income = isIncome(item);
+                return (
+                  <li key={item.id} className="flex flex-col gap-3 border-b pb-4 last:border-b-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <ColorDot color={category.color} />
+                        <span className="flex min-w-0 flex-col">
+                          <strong className="truncate font-semibold">{item.name}</strong>
+                          <small className="text-[13px] text-muted">{category.name}</small>
+                        </span>
+                      </div>
+                      <span className={`shrink-0 font-semibold tabular-nums ${income ? "text-success" : ""}`}>
+                        {income ? "+" : ""}
+                        {format.money(item.amount)}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+                      <span>{text.frequencies[item.frequency]}</span>
+                      <span>
+                        {text.perMonth} {format.money(toMonthly(item.amount, item.frequency))}
+                      </span>
+                      <span>{format.date(item.nextDate)}</span>
+                      <DueBadge date={item.nextDate} />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" onClick={() => logPayment(item)}>
+                        {income ? text.markReceived : text.markPaid}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditing({ item })}>
+                        {dict.common.edit}
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="-mx-5 hidden overflow-x-auto px-5 md:block">
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="text-left text-xs font-semibold tracking-wide text-muted uppercase [&>th]:border-b [&>th]:px-3 [&>th]:py-2">
@@ -120,7 +160,8 @@ export function BillsView() {
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </Card>
 

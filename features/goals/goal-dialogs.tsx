@@ -6,10 +6,11 @@ import { Field, Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/i18n-provider";
 import { addMonths, currentMonth } from "@/lib/domain/dates";
+import { parseMoney } from "@/lib/domain/money";
+import { nextPaletteColor } from "@/lib/domain/palette";
 import type { Goal } from "@/lib/domain/types";
 import { contributeToGoal, deleteGoal, saveGoal } from "@/lib/store/actions";
-
-const DEFAULT_COLOR = "#4f46e5";
+import { useAppData } from "@/lib/store/use-app-data";
 
 export function GoalFormDialog({ open, goal, onClose }: { open: boolean; goal?: Goal; onClose: () => void }) {
   return (
@@ -21,15 +22,22 @@ export function GoalFormDialog({ open, goal, onClose }: { open: boolean; goal?: 
 
 function GoalForm({ goal, onClose }: { goal?: Goal; onClose: () => void }) {
   const { dict } = useI18n();
+  const toast = useToast();
+  const data = useAppData();
   const text = dict.goals;
   const [name, setName] = useState(goal?.name ?? "");
   const [target, setTarget] = useState(goal ? String(goal.target) : "");
   const [saved, setSaved] = useState(goal ? String(goal.saved) : "0");
   const [deadline, setDeadline] = useState(goal?.deadline ?? `${addMonths(currentMonth(), 12)}-01`);
-  const [color, setColor] = useState(goal?.color ?? DEFAULT_COLOR);
+  const [color, setColor] = useState(goal?.color ?? nextPaletteColor(data?.goals.map((item) => item.color) ?? []));
+  const parsedTarget = parseMoney(target);
+  const parsedSaved = parseMoney(saved);
 
   const submit = () => {
-    saveGoal({ name: name.trim(), target: Number(target), saved: Number(saved), deadline, color }, goal?.id);
+    if (!name.trim() || parsedTarget === null || parsedTarget <= 0 || parsedSaved === null || !saveGoal({ name: name.trim(), target: parsedTarget, saved: parsedSaved, deadline, color }, goal?.id)) {
+      toast(dict.common.notSaved);
+      return;
+    }
     onClose();
   };
 
@@ -39,6 +47,7 @@ function GoalForm({ goal, onClose }: { goal?: Goal; onClose: () => void }) {
       submitLabel={goal ? dict.common.saveChanges : dict.common.save}
       onSubmit={submit}
       onCancel={onClose}
+      submitDisabled={!name.trim() || parsedTarget === null || parsedTarget <= 0 || parsedSaved === null}
       onDelete={
         goal
           ? () => {
@@ -76,17 +85,26 @@ function ContributionForm({ goal, onClose }: { goal: Goal; onClose: () => void }
   const toast = useToast();
   const text = dict.goals;
   const [amount, setAmount] = useState("");
+  const parsed = parseMoney(amount, { allowNegative: true });
 
   const submit = () => {
-    const value = Number(amount);
-    const reached = goal.saved < goal.target && goal.saved + value >= goal.target;
-    contributeToGoal(goal.id, value);
+    if (parsed === null || parsed === 0) {
+      toast(dict.common.notSaved);
+      return;
+    }
+    const applied = contributeToGoal(goal.id, parsed);
     onClose();
-    toast(reached ? format.message(text.goalReached, { name: goal.name }) : format.message(text.contributed, { amount: format.money(value), name: goal.name }));
+    if (applied > 0 && goal.saved < goal.target && goal.saved + applied >= goal.target) {
+      toast(format.message(text.goalReached, { name: goal.name }));
+    } else if (applied > 0) {
+      toast(format.message(text.contributed, { amount: format.money(applied), name: goal.name }));
+    } else if (applied < 0) {
+      toast(format.message(text.withdrawn, { amount: format.money(-applied), name: goal.name }));
+    }
   };
 
   return (
-    <DialogForm title={format.message(text.contributeTitle, { name: goal.name })} submitLabel={dict.common.add} onSubmit={submit} onCancel={onClose}>
+    <DialogForm title={format.message(text.contributeTitle, { name: goal.name })} submitLabel={dict.common.add} onSubmit={submit} onCancel={onClose} submitDisabled={parsed === null || parsed === 0}>
       <Field label={dict.common.amount} hint={text.contributeHint}>
         <Input type="number" inputMode="decimal" step="0.01" required data-autofocus value={amount} onChange={(e) => setAmount(e.target.value)} />
       </Field>

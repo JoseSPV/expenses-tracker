@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Dialog, DialogForm } from "@/components/ui/dialog";
 import { Field, Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { CategorySelect } from "@/features/categories/category-select";
 import { useI18n } from "@/i18n/i18n-provider";
+import { parseMoney } from "@/lib/domain/money";
 import { categoryOrPlaceholder } from "@/lib/domain/selectors";
 import type { AppData } from "@/lib/domain/types";
 import { deleteBudget, setBudget } from "@/lib/store/actions";
@@ -22,14 +24,19 @@ export function BudgetFormDialog({ open, onClose, categoryId }: { open: boolean;
 
 function BudgetForm({ data, categoryId, onClose }: { data: AppData; categoryId?: string; onClose: () => void }) {
   const { dict, format } = useI18n();
+  const toast = useToast();
   const text = dict.budgets;
   const isUnbudgeted = (id: string) => data.categories.some((c) => c.id === id && c.type === "expense" && !(id in data.budgets));
   const [selected, setSelected] = useState(categoryId ?? data.categories.find((c) => isUnbudgeted(c.id))?.id ?? "");
   const [limit, setLimit] = useState(categoryId && data.budgets[categoryId] ? String(data.budgets[categoryId]) : "");
   const exists = Boolean(categoryId && categoryId in data.budgets);
+  const parsed = parseMoney(limit);
 
   const submit = () => {
-    setBudget(selected, Number(limit));
+    if (parsed === null || parsed <= 0 || !setBudget(selected, parsed)) {
+      toast(dict.common.notSaved);
+      return;
+    }
     onClose();
   };
 
@@ -47,7 +54,7 @@ function BudgetForm({ data, categoryId, onClose }: { data: AppData; categoryId?:
             }
           : undefined
       }
-      submitDisabled={!selected}
+      submitDisabled={!selected || parsed === null || parsed <= 0}
     >
       {!categoryId ? (
         <Field label={dict.common.category}>

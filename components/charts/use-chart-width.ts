@@ -10,7 +10,9 @@ export function useChartWidth() {
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
-    const observer = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
+    const apply = (next: number) => setWidth((current) => (current === next ? current : next));
+    apply(Math.round(element.getBoundingClientRect().width));
+    const observer = new ResizeObserver(([entry]) => apply(Math.round(entry.contentRect.width)));
     observer.observe(element);
     return () => observer.disconnect();
   }, []);

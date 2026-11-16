@@ -6,13 +6,12 @@ import { Dialog, DialogForm } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/i18n-provider";
+import { nextPaletteColor } from "@/lib/domain/palette";
 import { categoryUsage } from "@/lib/domain/selectors";
 import type { AppData, Category, CategoryType } from "@/lib/domain/types";
 import { deleteCategory, saveCategory } from "@/lib/store/actions";
 import { useAppData } from "@/lib/store/use-app-data";
 import { CategorySelect } from "./category-select";
-
-const DEFAULT_COLOR = "#4f46e5";
 
 interface CategoryFormDialogProps {
   open: boolean;
@@ -56,16 +55,19 @@ function CategoryForm({
   const toast = useToast();
   const text = dict.categories;
   const [name, setName] = useState(category?.name ?? "");
-  const [color, setColor] = useState(category?.color ?? DEFAULT_COLOR);
+  const [color, setColor] = useState(category?.color ?? nextPaletteColor(data.categories.map((item) => item.color)));
   const [type, setType] = useState<CategoryType>(category?.type ?? defaultType);
 
   const usage = category ? categoryUsage(data, category.id) : null;
   const typeLocked = Boolean(usage && usage.transactions + usage.recurring > 0);
-  const key = name.trim().toLocaleLowerCase();
-  const duplicate = data.categories.some((c) => c.id !== category?.id && c.name.trim().toLocaleLowerCase() === key);
+  const key = name.trim().toLocaleLowerCase("es");
+  const duplicate = data.categories.some((c) => c.id !== category?.id && c.name.trim().toLocaleLowerCase("es") === key);
 
   const submit = () => {
-    saveCategory({ name: name.trim(), color, type }, category?.id);
+    if (!saveCategory({ name: name.trim(), color, type }, category?.id)) {
+      toast(dict.common.notSaved);
+      return;
+    }
     onClose();
     toast(text.saved);
   };

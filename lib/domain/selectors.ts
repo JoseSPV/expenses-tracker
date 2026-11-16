@@ -73,14 +73,17 @@ export function netWorthTotals(accounts: Account[]) {
   return { assets, liabilities, net: assets - liabilities };
 }
 
-/** Average expenses over the last `months` complete months. */
+/**
+ * Average expenses over the last `months` complete months.
+ * When those months have no spending, falls back to the current month so a new
+ * ledger doesn't preload the emergency fund with 0.
+ */
 export function averageMonthlyExpenses(data: AppData, months = 3): number {
   const month = currentMonth();
-  const expenses = Array.from(
-    { length: months },
-    (_, i) => totals(data, transactionsInMonth(data, addMonths(month, -(i + 1)))).expense,
-  );
-  return sum(expenses, (e) => e) / months;
+  const past = Array.from({ length: months }, (_, i) => totals(data, transactionsInMonth(data, addMonths(month, -(i + 1)))).expense);
+  const total = sum(past, (expense) => expense);
+  if (total > 0) return total / months;
+  return totals(data, transactionsInMonth(data, month)).expense;
 }
 
 export function categoryUsage(data: AppData, categoryId: string) {

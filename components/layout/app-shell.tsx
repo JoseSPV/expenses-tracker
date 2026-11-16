@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Database, Plus, SunMoon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransactionFormDialog } from "@/features/transactions/transaction-form-dialog";
@@ -15,6 +15,14 @@ import { toggleTheme } from "./theme";
 
 function Sidebar({ activeSegment }: { activeSegment?: string }) {
   const { locale, dict } = useI18n();
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    const current = nav?.querySelector<HTMLElement>("[aria-current='page']");
+    if (!nav || !current || nav.scrollWidth <= nav.clientWidth) return;
+    nav.scrollLeft = Math.max(0, current.offsetLeft - (nav.clientWidth - current.offsetWidth) / 2);
+  }, [activeSegment]);
 
   return (
     <aside className="fixed inset-x-0 bottom-0 z-20 border-t bg-surface px-1 pt-1.5 pb-[calc(6px+env(safe-area-inset-bottom))] md:sticky md:top-0 md:flex md:h-screen md:flex-col md:gap-7 md:border-t-0 md:border-r md:px-4 md:py-6">
@@ -22,7 +30,11 @@ function Sidebar({ activeSegment }: { activeSegment?: string }) {
         <span className="grid size-8 place-items-center rounded-[10px] bg-primary font-extrabold text-primary-fg">J</span>
         {dict.meta.appName}
       </Link>
-      <nav aria-label={dict.nav.label} className="flex justify-around md:flex-col md:justify-start md:gap-1">
+      <nav
+        ref={navRef}
+        aria-label={dict.nav.label}
+        className="flex gap-1 overflow-x-auto [scrollbar-width:none] md:flex-col md:overflow-visible md:gap-1 [&::-webkit-scrollbar]:hidden"
+      >
         {NAV_ITEMS.map(({ segment, labelKey, icon: Icon }) => {
           const active = segment === activeSegment;
           return (
@@ -31,12 +43,12 @@ function Sidebar({ activeSegment }: { activeSegment?: string }) {
               href={hrefFor(locale, segment)}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center gap-0.5 rounded-[10px] p-2 text-[10px] font-medium text-muted hover:bg-surface-2 hover:text-fg md:flex-row md:gap-3 md:px-3 md:py-2.5 md:text-[15px]",
+                "flex min-h-11 min-w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] px-2.5 py-1.5 text-[11px] leading-none font-medium text-muted hover:bg-surface-2 hover:text-fg md:min-h-0 md:w-full md:min-w-0 md:shrink md:flex-row md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-[15px] md:leading-normal",
                 active && "bg-primary/13 text-primary hover:bg-primary/13 hover:text-primary",
               )}
             >
               <Icon size={20} strokeWidth={1.8} aria-hidden />
-              <span className="max-[480px]:sr-only">{dict.nav[labelKey]}</span>
+              <span>{dict.nav[labelKey]}</span>
             </Link>
           );
         })}
@@ -47,15 +59,15 @@ function Sidebar({ activeSegment }: { activeSegment?: string }) {
 
 function MonthPicker() {
   const { dict, format } = useI18n();
-  const { month, isCurrent, shift } = useMonth();
+  const { month, canGoForward, shift } = useMonth();
 
   return (
     <div className="order-3 flex w-full items-center justify-between gap-0.5 rounded-full border bg-surface p-0.5 sm:order-none sm:w-auto">
-      <Button variant="ghost" size="icon" className="size-8 rounded-full" onClick={() => shift(-1)} aria-label={dict.shell.previousMonth}>
+      <Button variant="ghost" size="icon" className="rounded-full" onClick={() => shift(-1)} aria-label={dict.shell.previousMonth}>
         <ChevronLeft size={18} />
       </Button>
-      <span className="min-w-36 text-center text-sm font-semibold">{month ? format.month(month) : "\u00a0"}</span>
-      <Button variant="ghost" size="icon" className="size-8 rounded-full" onClick={() => shift(1)} disabled={isCurrent} aria-label={dict.shell.nextMonth}>
+      <span className="min-w-0 flex-1 px-1 text-center text-sm font-semibold sm:min-w-36 sm:flex-none">{month ? format.month(month) : "\u00a0"}</span>
+      <Button variant="ghost" size="icon" className="rounded-full" onClick={() => shift(1)} disabled={!canGoForward} aria-label={dict.shell.nextMonth}>
         <ChevronRight size={18} />
       </Button>
     </div>
@@ -75,7 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Sidebar activeSegment={active?.segment} />
         <div className="min-w-0">
           <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b bg-bg/85 px-4 py-3 backdrop-blur-md md:px-8">
-            <h1 className="flex-1 text-[22px] font-bold">{active ? dict.nav[active.labelKey] : dict.meta.appName}</h1>
+            <h1 className="min-w-0 flex-1 truncate text-xl font-bold sm:text-[22px]">{active ? dict.nav[active.labelKey] : dict.meta.appName}</h1>
             {active?.usesMonth ? <MonthPicker /> : null}
             <div className="flex gap-1.5">
               <Button variant="ghost" size="icon" onClick={() => setOpenDialog("data")} title={dict.shell.manageData} aria-label={dict.shell.manageData}>
@@ -90,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Button>
             </div>
           </header>
-          <main className="max-w-7xl px-4 pt-6 pb-28 md:px-8 md:pb-12">{children}</main>
+          <main className="max-w-7xl px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:pb-12">{children}</main>
         </div>
       </div>
       <TransactionFormDialog open={openDialog === "transaction"} onClose={closeDialog} />

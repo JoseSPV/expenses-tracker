@@ -54,6 +54,8 @@ function Spending({ data, month, total }: { data: AppData; month: MonthKey; tota
 function Trend({ data, month }: { data: AppData; month: MonthKey }) {
   const { dict, format } = useI18n();
   const trend = monthlyTrend(data, month, 6);
+  if (trend.every((point) => point.income === 0 && point.expense === 0)) return <EmptyState>{dict.dashboard.noTrend}</EmptyState>;
+
   const series = [
     { name: dict.dashboard.income, color: "var(--color-success)", values: trend.map((t) => t.income) },
     { name: dict.dashboard.expenses, color: "var(--color-danger)", values: trend.map((t) => t.expense) },
@@ -79,12 +81,12 @@ function BudgetSummary({ data, month }: { data: AppData; month: MonthKey }) {
           <li key={row.categoryId} className="flex flex-col gap-2">
             <div className="flex items-center gap-2.5">
               <ColorDot color={category.color} />
-              <span className="flex-1 truncate">{category.name}</span>
-              <span className="text-sm text-muted tabular-nums">
+              <span className="min-w-0 flex-1 truncate">{category.name}</span>
+              <span className="shrink-0 text-sm text-muted tabular-nums">
                 {format.money(row.spent)} / {format.money(row.limit)}
               </span>
             </div>
-            <Progress ratio={row.ratio} status={row.status} />
+            <Progress label={category.name} ratio={row.ratio} status={row.status} />
           </li>
         );
       })}
@@ -134,8 +136,8 @@ function GoalSummary({ data }: { data: AppData }) {
               <strong className="truncate">{goal.name}</strong>
               <span className="text-muted">{format.percent(ratio)}</span>
             </div>
-            <Progress ratio={ratio} color={goal.color} />
-            <div className="flex justify-between text-[13px] text-muted">
+            <Progress label={goal.name} ratio={ratio} color={goal.color} />
+            <div className="flex flex-wrap justify-between gap-x-3 text-[13px] text-muted">
               <span>{format.message(dict.dashboard.goalSaved, { amount: format.money(goal.saved) })}</span>
               <span>{format.message(dict.dashboard.goalTarget, { amount: format.money(goal.target) })}</span>
             </div>
@@ -162,7 +164,7 @@ export function DashboardView() {
         <Kpi label={text.income} value={format.money(summary.income)} tone="positive" />
         <Kpi label={text.expenses} value={format.money(summary.expense)} />
         <Kpi label={text.net} value={format.money(summary.net)} tone={summary.net >= 0 ? "positive" : "negative"} />
-        <Kpi label={text.savingsRate} value={format.percent(summary.savingsRate)} hint={text.savingsRateHint} />
+        <Kpi label={text.savingsRate} value={summary.income > 0 ? format.percent(summary.savingsRate) : "—"} hint={text.savingsRateHint} />
       </KpiGrid>
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>

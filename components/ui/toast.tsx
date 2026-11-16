@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, useCallback, useRef, useState, type ReactNode } from "react";
+import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const ToastContext = createContext<((message: string) => void) | null>(null);
@@ -14,6 +14,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setMessage(null), 2400);
   }, []);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
 
   return (
     <ToastContext value={show}>

@@ -31,7 +31,7 @@ function GoalCard({ goal, onEdit, onContribute }: { goal: Goal; onEdit: () => vo
           {format.message(text.progress, { amount: format.money(goal.target), percent: format.percent(progress.ratio) })}
         </div>
       </div>
-      <Progress ratio={progress.ratio} color={goal.color} />
+      <Progress label={goal.name} ratio={progress.ratio} color={goal.color} />
       <div className="text-sm">
         {progress.done ? (
           <Badge tone="success">{text.reached}</Badge>
@@ -73,6 +73,7 @@ export function GoalsView() {
         <Kpi label={text.totalTargets} value={format.money(target)} hint={format.message(text.complete, { percent: format.percent(target ? saved / target : 0) })} />
         <Kpi label={text.neededPerMonth} value={format.money(monthlyNeeded)} hint={text.neededHint} />
       </KpiGrid>
+      {data.goals.length === 0 ? <p className="text-muted">{text.empty}</p> : null}
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {data.goals.map((goal) => (
           <GoalCard

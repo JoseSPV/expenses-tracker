@@ -40,17 +40,23 @@ function BudgetRowItem({ row, name, color, pace, onEdit }: { row: BudgetRow; nam
   const text = dict.budgets;
   return (
     <li className="flex flex-col gap-2">
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         <ColorDot color={color} />
-        <strong className="flex-1 truncate">{name}</strong>
-        <span className="text-sm text-muted tabular-nums">
-          {format.money(row.spent)} / {format.money(row.limit)}
-        </span>
+        <strong className="min-w-0 flex-1 truncate">{name}</strong>
         <Button size="sm" variant="ghost" onClick={onEdit}>
           {dict.common.edit}
         </Button>
       </div>
-      <Progress ratio={row.ratio} status={row.status} marker={pace > 0 && pace < 1 ? pace : undefined} markerLabel={text.expectedPace} />
+      <p className="text-sm text-muted tabular-nums">
+        {format.money(row.spent)} / {format.money(row.limit)}
+      </p>
+      <Progress
+        label={name}
+        ratio={row.ratio}
+        status={row.status}
+        marker={pace > 0 && pace < 1 ? pace : undefined}
+        markerLabel={text.expectedPace}
+      />
       <div className="flex justify-between text-[13px] text-muted">
         {row.remaining < 0 ? (
           <span className="text-danger">{format.message(text.overBy, { amount: format.money(-row.remaining) })}</span>
@@ -127,11 +133,13 @@ export function BudgetsView() {
           <CardHeader title={text.unbudgeted} />
           <ul className="flex flex-col gap-3">
             {unbudgeted.map(({ categoryId, amount }) => (
-              <li key={categoryId} className="flex items-center gap-2.5">
-                <ColorDot color={category(categoryId).color} />
-                <span className="flex-1 truncate">{category(categoryId).name}</span>
-                <span className="font-semibold tabular-nums">{format.money(amount)}</span>
-                <Button size="sm" variant="ghost" onClick={() => setEditing(categoryId)}>
+              <li key={categoryId} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                  <ColorDot color={category(categoryId).color} />
+                  <span className="min-w-0 flex-1 truncate">{category(categoryId).name}</span>
+                  <span className="font-semibold tabular-nums">{format.money(amount)}</span>
+                </div>
+                <Button size="sm" variant="ghost" className="self-start sm:self-auto" onClick={() => setEditing(categoryId)}>
                   {text.setBudget}
                 </Button>
               </li>

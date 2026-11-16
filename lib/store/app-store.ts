@@ -1,3 +1,4 @@
+import { canonicalizeDate } from "@/lib/domain/dates";
 import type { AppData } from "@/lib/domain/types";
 import type { SeedText } from "@/i18n/types";
 import { hasLegacyData, migrateLegacyData } from "./legacy-migration";
@@ -24,7 +25,10 @@ function readStored(): AppData | null {
   if (!raw) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (isAppData(parsed)) return parsed;
+    if (isAppData(parsed)) {
+      parsed.transactions.forEach((t) => (t.date = canonicalizeDate(t.date)));
+      return parsed;
+    }
   } catch {
     // Fall through: keep a copy instead of silently overwriting what the user had.
   }
@@ -67,14 +71,23 @@ export function subscribe(listener: () => void): () => void {
   };
 }
 
-/** Single write path: the recipe mutates a copy, so every update yields a new snapshot. */
-export function updateData(recipe: (draft: AppData) => void): void {
-  if (!data) return;
+/** Current snapshot without loading or seeding. Writes read this so they see their own previous update. */
+export function peekData(): AppData | null {
+  return data;
+}
+
+/**
+ * Single write path: the recipe mutates a copy, so every update yields a new snapshot.
+ * Return `false` from the recipe to discard the copy (validation failed, nothing changed).
+ */
+export function updateData(recipe: (draft: AppData) => boolean | void): boolean {
+  if (!data) return false;
   const draft = structuredClone(data);
-  recipe(draft);
+  if (recipe(draft) === false) return false;
   data = draft;
   persist();
   emit();
+  return true;
 }
 
 export function replaceData(next: AppData): void {

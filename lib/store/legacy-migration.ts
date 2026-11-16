@@ -1,3 +1,5 @@
+import { canonicalizeDate } from "@/lib/domain/dates";
+import { PALETTE } from "@/lib/domain/palette";
 import type { AppData, Budgets, Category, Transaction } from "@/lib/domain/types";
 import type { SeedText } from "@/i18n/types";
 import { INCOME_CATEGORY_IDS, seedCategories } from "./seed";
@@ -9,8 +11,6 @@ const LEGACY_KEYS = {
   budgets: "daily-expenses-budgets-es",
 };
 const LEGACY_EMPTY_DESCRIPTION = "Sin descripción";
-
-const PALETTE = ["#6366f1", "#22c55e", "#f97316", "#0ea5e9", "#eab308", "#ec4899", "#a855f7", "#14b8a6", "#f43f5e", "#94a3b8"];
 
 interface LegacyExpense {
   id: number;
@@ -33,11 +33,11 @@ const isLegacyExpense = (value: unknown): value is LegacyExpense => {
   return typeof e === "object" && e !== null && typeof e.amount === "number" && typeof e.date === "string";
 };
 
-/** `d/m/yyyy` (es-ES `toLocaleDateString`) → `yyyy-mm-dd`. */
+/** `d/m/yyyy` (es-ES `toLocaleDateString`) → `yyyy-mm-dd`. A 2-digit year becomes 20xx. */
 function legacyDateToISO(value: string): string | null {
   const [day, month, year] = value.split("/").map(Number);
   if (!day || !month || !year) return null;
-  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  return canonicalizeDate(`${year}-${month}-${day}`);
 }
 
 export const hasLegacyData = (storage: Storage): boolean =>

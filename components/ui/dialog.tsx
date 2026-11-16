@@ -27,7 +27,7 @@ export function Dialog({ open, onClose, children }: { open: boolean; onClose: ()
       ref={ref}
       onClose={onClose}
       onClick={(event) => event.target === event.currentTarget && onClose()}
-      className="m-auto w-[min(440px,calc(100vw-32px))] rounded-2xl bg-surface p-0 text-fg shadow-2xl"
+      className="m-auto max-h-[calc(100dvh-32px)] w-[min(440px,calc(100vw-32px))] overflow-y-auto rounded-2xl bg-surface p-0 text-fg shadow-2xl"
     >
       {open ? children : null}
     </dialog>
@@ -56,21 +56,22 @@ export function DialogForm({ title, submitLabel, onSubmit, onCancel, onDelete, s
   return (
     <form onSubmit={handleSubmit}>
       <header className="flex items-center justify-between gap-2 border-b px-5 py-3.5">
-        <h2 className="text-[17px] font-semibold">{title}</h2>
+        <h2 className="min-w-0 text-[17px] font-semibold">{title}</h2>
         <Button variant="ghost" size="icon" onClick={onCancel} aria-label={dict.common.close}>
           <X size={18} />
         </Button>
       </header>
       <div className="flex flex-col gap-3.5 p-5">{children}</div>
-      <footer className="flex items-center gap-2 border-t px-5 py-3.5">
+      <footer className="flex flex-wrap items-center gap-2 border-t px-5 py-3.5">
         {onDelete ? <DeleteButton onConfirm={onDelete} /> : null}
-        <span className="flex-1" />
-        <Button variant="ghost" onClick={onCancel}>
-          {dict.common.cancel}
-        </Button>
-        <Button type="submit" variant="primary" disabled={submitDisabled}>
-          {submitLabel}
-        </Button>
+        <div className="ml-auto flex flex-wrap justify-end gap-2">
+          <Button variant="ghost" onClick={onCancel}>
+            {dict.common.cancel}
+          </Button>
+          <Button type="submit" variant="primary" disabled={submitDisabled}>
+            {submitLabel}
+          </Button>
+        </div>
       </footer>
     </form>
   );

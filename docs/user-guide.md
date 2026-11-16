@@ -87,7 +87,7 @@ Herramientas rápidas que no guardan nada:
 
 - **Interés compuesto**: cuánto crece una inversión con aportaciones mensuales.
 - **Cuota de préstamo**: cuota mensual, intereses totales y total pagado.
-- **Fondo de emergencia**: cuánto deberías tener ahorrado. Los gastos mensuales vienen precargados con tu media de los últimos 3 meses. Se recomienda cubrir de 3 a 6 meses.
+- **Fondo de emergencia**: cuánto deberías tener ahorrado. Los gastos mensuales vienen precargados con tu media de los últimos 3 meses. Si esos meses no tienen gastos, se usa el mes en curso. Se recomienda cubrir de 3 a 6 meses.
 
 ## Categorías
 

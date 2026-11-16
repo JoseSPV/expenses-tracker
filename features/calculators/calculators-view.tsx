@@ -27,7 +27,7 @@ function useNumbers<K extends string>(initial: Values<K>) {
 
 function Stats({ items }: { items: [string, string][] }) {
   return (
-    <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
+    <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1">
       {items.map(([label, value]) => (
         <div key={label} className="flex flex-col rounded-[10px] bg-surface-2 px-3.5 py-3">
           <span className="text-xs text-muted">{label}</span>
@@ -114,7 +114,7 @@ function LoanPayment() {
           [text.total, format.money(result.total)],
         ]}
       />
-      <Progress ratio={principalShare} color="var(--color-primary)" />
+      <Progress label={text.title} ratio={principalShare} color="var(--color-primary)" />
       <div className="mt-2 flex justify-between text-[13px] text-muted">
         <span>{format.message(text.principalShare, { percent: format.percent(principalShare) })}</span>
         <span>{format.message(text.interestShare, { percent: format.percent(1 - principalShare) })}</span>
@@ -148,7 +148,7 @@ function EmergencyFund({ averageExpenses }: { averageExpenses: number }) {
           [text.covered, format.decimal(result.monthsCovered)],
         ]}
       />
-      <Progress ratio={result.ratio} status={result.ratio >= 1 ? "ok" : result.ratio >= 0.5 ? "warning" : "over"} />
+      <Progress label={text.title} ratio={result.ratio} status={result.ratio >= 1 ? "ok" : result.ratio >= 0.5 ? "warning" : "over"} />
       <div className="mt-2 flex justify-between text-[13px] text-muted">
         <span>{format.message(text.funded, { percent: format.percent(result.ratio) })}</span>
         <span>{text.advice}</span>

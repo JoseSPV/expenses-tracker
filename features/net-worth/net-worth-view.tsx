@@ -87,18 +87,22 @@ export function NetWorthView() {
         />
         <Kpi label={text.assets} value={format.money(assets)} />
         <Kpi label={text.liabilities} value={format.money(liabilities)} />
-        <Kpi label={text.debtRatio} value={format.percent(assets ? liabilities / assets : 0)} hint={text.debtRatioHint} />
+        <Kpi label={text.debtRatio} value={assets ? format.percent(liabilities / assets) : "—"} hint={text.debtRatioHint} />
       </KpiGrid>
       <Card>
         <CardHeader title={text.trend} />
-        <LineChart
-          label={text.trend}
-          labels={history.map((s) => format.shortMonth(s.month))}
-          series={[
-            { name: text.netWorth, color: "var(--color-primary)", values: history.map((s) => s.assets - s.liabilities) },
-            { name: text.liabilities, color: "var(--color-danger)", values: history.map((s) => s.liabilities) },
-          ]}
-        />
+        {history.some((snapshot) => snapshot.assets !== 0 || snapshot.liabilities !== 0) ? (
+          <LineChart
+            label={text.trend}
+            labels={history.map((s) => format.shortMonth(s.month))}
+            series={[
+              { name: text.netWorth, color: "var(--color-primary)", values: history.map((s) => s.assets - s.liabilities) },
+              { name: text.liabilities, color: "var(--color-danger)", values: history.map((s) => s.liabilities) },
+            ]}
+          />
+        ) : (
+          <EmptyState>{text.noHistory}</EmptyState>
+        )}
       </Card>
       <div className="grid gap-5 lg:grid-cols-2">
         <AccountList

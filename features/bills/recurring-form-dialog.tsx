@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { Dialog, DialogForm } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { CategorySelect } from "@/features/categories/category-select";
 import { useI18n } from "@/i18n/i18n-provider";
 import { today } from "@/lib/domain/dates";
+import { parseMoney } from "@/lib/domain/money";
 import type { AppData, Frequency, RecurringItem } from "@/lib/domain/types";
 import { deleteRecurring, saveRecurring } from "@/lib/store/actions";
 import { useAppData } from "@/lib/store/use-app-data";
@@ -23,15 +25,20 @@ export function RecurringFormDialog({ open, item, onClose }: { open: boolean; it
 
 function RecurringForm({ data, item, onClose }: { data: AppData; item?: RecurringItem; onClose: () => void }) {
   const { dict } = useI18n();
+  const toast = useToast();
   const text = dict.bills;
   const [name, setName] = useState(item?.name ?? "");
   const [amount, setAmount] = useState(item ? String(item.amount) : "");
   const [frequency, setFrequency] = useState<Frequency>(item?.frequency ?? "monthly");
   const [categoryId, setCategoryId] = useState(item?.categoryId ?? data.categories.find((c) => c.type === "expense")?.id ?? "");
   const [nextDate, setNextDate] = useState(item?.nextDate ?? today());
+  const parsed = parseMoney(amount);
 
   const submit = () => {
-    saveRecurring({ name: name.trim(), amount: Number(amount), frequency, categoryId, nextDate }, item?.id);
+    if (!name.trim() || parsed === null || parsed <= 0 || !saveRecurring({ name: name.trim(), amount: parsed, frequency, categoryId, nextDate }, item?.id)) {
+      toast(dict.common.notSaved);
+      return;
+    }
     onClose();
   };
 
@@ -41,7 +48,7 @@ function RecurringForm({ data, item, onClose }: { data: AppData; item?: Recurrin
       submitLabel={item ? dict.common.saveChanges : dict.common.save}
       onSubmit={submit}
       onCancel={onClose}
-      submitDisabled={!categoryId}
+      submitDisabled={!name.trim() || !categoryId || parsed === null || parsed <= 0}
       onDelete={
         item
           ? () => {

@@ -52,10 +52,10 @@ export function DonutChart({
           );
         })}
       </g>
-      <text x={center} y={center - 6} textAnchor="middle" className="fill-muted text-xs">
+      <text x={center} y={center - 6} textAnchor="middle" className="fill-muted" fontSize={13}>
         {label}
       </text>
-      <text x={center} y={center + 16} textAnchor="middle" className="fill-fg text-lg font-bold">
+      <text x={center} y={center + 16} textAnchor="middle" className="fill-fg" fontSize={value.length > 12 ? 13 : 16} fontWeight={700}>
         {value}
       </text>
     </svg>

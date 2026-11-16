@@ -46,20 +46,24 @@ export function Progress({
   color,
   marker,
   markerLabel,
+  label,
 }: {
   ratio: number;
   status?: BudgetStatus;
   color?: string;
   marker?: number;
   markerLabel?: string;
+  label: string;
 }) {
   const percent = Math.round(ratio * 100);
   return (
     <div
       role="progressbar"
+      aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={percent}
+      aria-valuetext={marker !== undefined && markerLabel ? `${percent}%. ${markerLabel}` : undefined}
       className="relative h-2 rounded-full bg-surface-2"
     >
       <span
@@ -67,11 +71,7 @@ export function Progress({
         style={{ width: `${Math.min(100, Math.max(0, percent))}%`, background: color ?? STATUS_COLOR[status] }}
       />
       {marker !== undefined ? (
-        <i
-          title={markerLabel}
-          className="absolute -inset-y-1 w-0.5 rounded-sm bg-fg opacity-35"
-          style={{ left: `${Math.min(100, marker * 100)}%` }}
-        />
+        <span aria-hidden className="absolute -inset-y-1 w-0.5 rounded-sm bg-fg opacity-35" style={{ left: `${Math.min(100, marker * 100)}%` }} />
       ) : null}
     </div>
   );
