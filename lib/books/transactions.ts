@@ -21,7 +21,8 @@ function byNewest(a: Movement, b: Movement): number {
 
 export type SaveTransactionResult =
   | { ok: true; movements: Movement[] }
-  | { ok: false; current: Movement };
+  | { ok: false; current: Movement }
+  | { ok: false; missing: true };
 
 /** Replaces a movement only when `expectedVersion` is still the one stored. Returns a new list. */
 export function saveTransaction(
@@ -30,9 +31,8 @@ export function saveTransaction(
 ): SaveTransactionResult {
   const index = movements.findIndex((movement) => movement.id === input.id);
   const current = movements[index];
-  if (!current || current.version !== input.expectedVersion) {
-    return { ok: false, current: current ?? { ...input, version: input.expectedVersion } };
-  }
+  if (!current) return { ok: false, missing: true };
+  if (current.version !== input.expectedVersion) return { ok: false, current };
   const saved: Movement = {
     id: input.id,
     amount: input.amount,
@@ -49,7 +49,9 @@ export function saveTransaction(
 /** One page of movements in a month. The cursor is the id of the last movement already shown. */
 export function listMonthTransactions(movements: Movement[], query: { month: string; cursor?: string }): MovementPage {
   const ordered = movements.filter((movement) => movement.date.startsWith(query.month)).sort(byNewest);
-  const start = query.cursor ? ordered.findIndex((movement) => movement.id === query.cursor) + 1 : 0;
+  const cursorIndex = query.cursor ? ordered.findIndex((movement) => movement.id === query.cursor) : -1;
+  if (query.cursor && cursorIndex === -1) return { items: [] };
+  const start = query.cursor ? cursorIndex + 1 : 0;
   const items = ordered.slice(start, start + PAGE_SIZE);
   const next = ordered[start + PAGE_SIZE];
   return next ? { items, nextCursor: items.at(-1)?.id } : { items };

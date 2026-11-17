@@ -31,6 +31,17 @@ describe("listMonthTransactions", () => {
     );
     assert.equal(second.nextCursor, undefined);
   });
+
+  it("returns nothing when the cursor is not in the month", () => {
+    const movements = [
+      { id: "t01", amount: 1, categoryId: "food", date: "2026-11-01", note: "", version: 1 },
+    ];
+
+    const page = listMonthTransactions(movements, { month: "2026-11", cursor: "missing" });
+
+    assert.deepEqual(page.items, []);
+    assert.equal(page.nextCursor, undefined);
+  });
 });
 
 describe("saveTransaction", () => {
@@ -57,5 +68,18 @@ describe("saveTransaction", () => {
     assert.equal(second.current.amount, 12);
     assert.equal(second.current.version, 2);
     assert.equal(first.movements[0]?.amount, 12);
+  });
+
+  it("does not invent a movement when the id is unknown", () => {
+    const result = saveTransaction([], {
+      id: "missing",
+      amount: 5,
+      categoryId: "food",
+      date: "2026-11-01",
+      note: "",
+      expectedVersion: 1,
+    });
+
+    assert.deepEqual(result, { ok: false, missing: true });
   });
 });
