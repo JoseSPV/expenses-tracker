@@ -86,7 +86,7 @@ function SignedOutBar() {
   };
 
   return (
-    <div className="flex w-full basis-full flex-wrap items-center justify-between gap-x-3 gap-y-1">
+    <div className="flex w-full basis-full flex-wrap items-center gap-x-3 gap-y-1">
       <p className="text-sm font-medium">{text.signedOut}</p>
       <Button variant="primary" className="min-h-11" onClick={openBooks}>
         {text.yourBooks}
