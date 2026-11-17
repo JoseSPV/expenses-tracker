@@ -19,7 +19,11 @@
     "nextMonth": "Mes siguiente",
     "toggleTheme": "Cambiar tema",
     "manageData": "Gestionar datos",
-    "addTransaction": "Añadir movimiento"
+    "addTransaction": "Añadir movimiento",
+    "signedOut": "No has entrado",
+    "yourBooks": "Tus libros",
+    "signInOffline": "Hace falta conexión para entrar.",
+    "signInUnavailable": "El acceso con Google todavía no está conectado."
   },
   "common": {
     "save": "Guardar",

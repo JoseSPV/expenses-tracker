@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Database, Plus, SunMoon } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { TransactionFormDialog } from "@/features/transactions/transaction-form-dialog";
 import { useI18n } from "@/i18n/i18n-provider";
+import { signInProblem, type SignInProblem } from "@/lib/session/google-sign-in";
 import { cn } from "@/lib/utils";
 import { DataDialog } from "./data-dialog";
 import { MonthProvider, useMonth } from "./month-context";
@@ -74,6 +75,31 @@ function MonthPicker() {
   );
 }
 
+function SignedOutBar() {
+  const { dict } = useI18n();
+  const text = dict.shell;
+  const [problem, setProblem] = useState<SignInProblem | null>(null);
+
+  const openBooks = () => {
+    // Google sign-in is not wired yet, so the button cannot leave this page.
+    setProblem(signInProblem({ online: navigator.onLine, configured: false }));
+  };
+
+  return (
+    <div className="flex w-full basis-full flex-wrap items-center justify-between gap-x-3 gap-y-1">
+      <p className="text-sm font-medium">{text.signedOut}</p>
+      <Button variant="primary" className="min-h-11" onClick={openBooks}>
+        {text.yourBooks}
+      </Button>
+      {problem ? (
+        <p role="status" className="w-full text-sm text-danger">
+          {problem === "offline" ? text.signInOffline : text.signInUnavailable}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { locale, dict } = useI18n();
   const pathname = usePathname();
@@ -87,6 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Sidebar activeSegment={active?.segment} />
         <div className="min-w-0">
           <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b bg-bg/85 px-4 py-3 backdrop-blur-md md:px-8">
+            <SignedOutBar />
             <h1 className="min-w-0 flex-1 truncate text-xl font-bold sm:text-[22px]">{active ? dict.nav[active.labelKey] : dict.meta.appName}</h1>
             {active?.usesMonth ? <MonthPicker /> : null}
             <div className="flex gap-1.5">
