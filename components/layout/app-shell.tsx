@@ -8,13 +8,16 @@ import { Button } from "@/components/ui/button";
 import { TransactionFormDialog } from "@/features/transactions/transaction-form-dialog";
 import { useI18n } from "@/i18n/i18n-provider";
 import { signInProblem, type SignInProblem } from "@/lib/session/google-sign-in";
+import { homeScreen } from "@/lib/session/home-screen";
+import { currentSession, googleSignInConfigured, listBooks } from "@/lib/session/placeholders";
 import { cn } from "@/lib/utils";
 import { DataDialog } from "./data-dialog";
 import { MonthProvider, useMonth } from "./month-context";
 import { NAV_ITEMS, activeNavItem, hrefFor } from "./navigation";
+import { BookUnavailable, BooksUnknown, NoBooks, SignedInBar } from "./session-chrome";
 import { toggleTheme } from "./theme";
 
-function Sidebar({ activeSegment }: { activeSegment?: string }) {
+function Sidebar({ activeSegment, showSections }: { activeSegment?: string; showSections: boolean }) {
   const { locale, dict } = useI18n();
   const navRef = useRef<HTMLElement>(null);
 
@@ -26,12 +29,19 @@ function Sidebar({ activeSegment }: { activeSegment?: string }) {
   }, [activeSegment]);
 
   return (
-    <aside className="fixed inset-x-0 bottom-0 z-20 border-t bg-surface px-1 pt-1.5 pb-[calc(6px+env(safe-area-inset-bottom))] md:sticky md:top-0 md:flex md:h-screen md:flex-col md:gap-7 md:border-t-0 md:border-r md:px-4 md:py-6">
+    <aside
+      className={cn(
+        "md:sticky md:top-0 md:flex md:h-screen md:flex-col md:gap-7 md:border-r md:bg-surface md:px-4 md:py-6",
+        showSections
+          ? "fixed inset-x-0 bottom-0 z-20 border-t bg-surface px-1 pt-1.5 pb-[calc(6px+env(safe-area-inset-bottom))] md:border-t-0"
+          : "hidden",
+      )}
+    >
       <Link href={hrefFor(locale, "")} className="hidden items-center gap-2.5 px-2 text-lg font-bold md:flex">
         <span className="grid size-8 place-items-center rounded-[10px] bg-primary font-extrabold text-primary-fg">J</span>
         {dict.meta.appName}
       </Link>
-      <nav
+      {showSections ? <nav
         ref={navRef}
         aria-label={dict.nav.label}
         className="flex gap-1 overflow-x-auto [scrollbar-width:none] md:flex-col md:overflow-visible md:gap-1 [&::-webkit-scrollbar]:hidden"
@@ -53,7 +63,7 @@ function Sidebar({ activeSegment }: { activeSegment?: string }) {
             </Link>
           );
         })}
-      </nav>
+      </nav> : null}
     </aside>
   );
 }
@@ -76,13 +86,12 @@ function MonthPicker() {
 }
 
 function SignedOutBar() {
-  const { dict } = useI18n();
+  const { dict, locale } = useI18n();
   const text = dict.shell;
   const [problem, setProblem] = useState<SignInProblem | null>(null);
 
   const openBooks = () => {
-    // Google sign-in is not wired yet, so the button cannot leave this page.
-    setProblem(signInProblem({ online: navigator.onLine, configured: false }));
+    setProblem(signInProblem({ online: navigator.onLine, configured: googleSignInConfigured }));
   };
 
   return (
@@ -91,6 +100,9 @@ function SignedOutBar() {
       <Button variant="primary" className="min-h-11" onClick={openBooks}>
         {text.yourBooks}
       </Button>
+      <Link href={hrefFor(locale, "privacy")} className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline">
+        {text.privacy}
+      </Link>
       {problem ? (
         <p role="status" className="w-full text-sm text-danger">
           {problem === "offline" ? text.signInOffline : text.signInUnavailable}
@@ -104,32 +116,62 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { locale, dict } = useI18n();
   const pathname = usePathname();
   const active = activeNavItem(pathname, locale);
+  const session = currentSession();
+  const books = session.status === "signed-in" ? listBooks() : null;
+  const screen = homeScreen({
+    signedIn: session.status === "signed-in",
+    books: books === null ? 0 : books.ok ? books.books.length : "unknown",
+  });
+  const trial = screen === "trial";
+  const privacy = pathname === hrefFor(locale, "privacy");
+  const title = trial ? (privacy ? dict.privacy.title : active ? dict.nav[active.labelKey] : dict.meta.appName) : dict.shell.yourBooks;
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const skipFocus = useRef(true);
   const [openDialog, setOpenDialog] = useState<"transaction" | "data" | null>(null);
   const closeDialog = () => setOpenDialog(null);
+
+  useEffect(() => {
+    if (skipFocus.current) {
+      skipFocus.current = false;
+      return;
+    }
+    headingRef.current?.focus();
+  }, [pathname]);
 
   return (
     <MonthProvider>
       <div className="grid min-h-screen md:grid-cols-[232px_minmax(0,1fr)]">
-        <Sidebar activeSegment={active?.segment} />
+        <Sidebar activeSegment={active?.segment} showSections={trial} />
         <div className="min-w-0">
           <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b bg-bg/85 px-4 py-3 backdrop-blur-md md:px-8">
-            <SignedOutBar />
-            <h1 className="min-w-0 flex-1 truncate text-xl font-bold sm:text-[22px]">{active ? dict.nav[active.labelKey] : dict.meta.appName}</h1>
-            {active?.usesMonth ? <MonthPicker /> : null}
+            {session.status === "signed-in" ? <SignedInBar person={session.person} /> : <SignedOutBar />}
+            <h1 ref={headingRef} tabIndex={-1} className="min-w-0 flex-1 truncate text-xl font-bold sm:text-[22px]">
+              {title}
+            </h1>
+            {trial && active?.usesMonth ? <MonthPicker /> : null}
             <div className="flex gap-1.5">
-              <Button variant="ghost" size="icon" onClick={() => setOpenDialog("data")} title={dict.shell.manageData} aria-label={dict.shell.manageData}>
-                <Database size={18} />
-              </Button>
+              {trial ? (
+                <Button variant="ghost" size="icon" onClick={() => setOpenDialog("data")} title={dict.shell.manageData} aria-label={dict.shell.manageData}>
+                  <Database size={18} />
+                </Button>
+              ) : null}
               <Button variant="ghost" size="icon" onClick={toggleTheme} title={dict.shell.toggleTheme} aria-label={dict.shell.toggleTheme}>
                 <SunMoon size={18} />
               </Button>
-              <Button variant="primary" onClick={() => setOpenDialog("transaction")} aria-label={dict.shell.addTransaction}>
-                <Plus size={16} aria-hidden />
-                <span className="max-sm:hidden">{dict.shell.addTransaction}</span>
-              </Button>
+              {trial ? (
+                <Button variant="primary" onClick={() => setOpenDialog("transaction")} aria-label={dict.shell.addTransaction}>
+                  <Plus size={16} aria-hidden />
+                  <span className="max-sm:hidden">{dict.shell.addTransaction}</span>
+                </Button>
+              ) : null}
             </div>
           </header>
-          <main className="max-w-7xl px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:pb-12">{children}</main>
+          <main className="max-w-7xl px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:pb-12">
+            {screen === "trial" ? children : null}
+            {screen === "no-books" ? <NoBooks /> : null}
+            {screen === "books-unknown" ? <BooksUnknown /> : null}
+            {screen === "book" ? <BookUnavailable /> : null}
+          </main>
         </div>
       </div>
       <TransactionFormDialog open={openDialog === "transaction"} onClose={closeDialog} />
