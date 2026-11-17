@@ -66,7 +66,7 @@ function TransactionForm({ data, transaction, onClose }: { data: AppData; transa
   const pending = (parsed !== null && parsed > 0 ? parsed : 0) - alreadyCounted;
 
   const submit = () => {
-    if (parsed === null || parsed <= 0 || !saveTransaction({ amount: parsed, categoryId, date, note: note.trim() }, transaction?.id)) {
+    if (parsed === null || parsed <= 0 || !saveTransaction({ amount: parsed, categoryId, date, note: note.trim() }, transaction?.id, transaction?.version ?? 1)) {
       toast(dict.common.notSaved);
       return;
     }

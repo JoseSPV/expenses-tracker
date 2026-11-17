@@ -3,6 +3,7 @@ import { roundMoney } from "@/lib/domain/money";
 import { categoryUsage, netWorthTotals } from "@/lib/domain/selectors";
 import type { Account, AppData, Category, CategoryType, Goal, ISODate, RecurringItem, Transaction } from "@/lib/domain/types";
 import type { SeedText } from "@/i18n/types";
+import { saveTransaction as saveMovement } from "@/lib/books/transactions";
 import { replaceData, updateData } from "./app-store";
 import { createSeedData } from "./seed";
 
@@ -35,12 +36,19 @@ const nameKey = (name: string) => name.trim().toLocaleLowerCase("es");
 
 export type TransactionInput = Omit<Transaction, "id">;
 
-export const saveTransaction = (input: TransactionInput, id?: string): boolean =>
+export const saveTransaction = (input: TransactionInput, id?: string, expectedVersion?: number): boolean =>
   updateData((d) => {
     const date = cleanDate(input.date);
     const amount = roundMoney(input.amount);
     if (!date || !Number.isFinite(amount) || amount <= 0 || !hasCategory(d, input.categoryId)) return false;
-    upsert(d.transactions, { ...input, amount, date, note: input.note.trim() }, id);
+    const note = input.note.trim();
+    if (!id) {
+      d.transactions.push({ id: newId(), amount, categoryId: input.categoryId, date, note, version: 1 });
+      return;
+    }
+    const result = saveMovement(d.transactions, { id, amount, categoryId: input.categoryId, date, note, expectedVersion: expectedVersion ?? 1 });
+    if (!result.ok) return false;
+    d.transactions = result.movements;
   });
 
 export const deleteTransaction = (id: string) =>

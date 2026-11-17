@@ -10,6 +10,7 @@ import { Input, Select } from "@/components/ui/input";
 import { ViewSkeleton } from "@/components/ui/view-skeleton";
 import { useI18n } from "@/i18n/i18n-provider";
 import { formattingLocale } from "@/i18n/config";
+import { listMonthTransactions } from "@/lib/books/transactions";
 import { buildMonthSummaryCsv, downloadCsv } from "@/lib/export-month-csv";
 import { categoryOrPlaceholder, spendingByCategory, totals, transactionsInMonth, typeOf } from "@/lib/domain/selectors";
 import { fold } from "@/lib/domain/text";
@@ -32,6 +33,20 @@ function filterTransactions(data: AppData, month: MonthKey, filters: Filters, pl
     .sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 }
 
+function pageThrough(list: Transaction[], month: MonthKey, pageCount: number): { items: Transaction[]; nextCursor?: string } {
+  let cursor: string | undefined;
+  let items: Transaction[] = [];
+  let nextCursor: string | undefined;
+  for (let page = 0; page < pageCount; page++) {
+    const result = listMonthTransactions(list, { month, cursor });
+    items = items.concat(result.items);
+    nextCursor = result.nextCursor;
+    if (!nextCursor) break;
+    cursor = nextCursor;
+  }
+  return { items, nextCursor };
+}
+
 function groupByDate(transactions: Transaction[]): [string, Transaction[]][] {
   const groups = new Map<string, Transaction[]>();
   for (const transaction of transactions) {
@@ -49,10 +64,18 @@ export function TransactionsView() {
   const text = dict.transactions;
   const [filters, setFilters] = useState<Filters>({ query: "", type: "all", categoryId: "all" });
   const [editing, setEditing] = useState<Transaction | null>(null);
+  const filterKey = `${month ?? ""}\0${filters.query}\0${filters.type}\0${filters.categoryId}`;
+  const [seenKey, setSeenKey] = useState(filterKey);
+  const [pages, setPages] = useState(1);
+  if (seenKey !== filterKey) {
+    setSeenKey(filterKey);
+    setPages(1);
+  }
 
   if (!data || !month) return <ViewSkeleton />;
 
   const list = filterTransactions(data, month, filters, dict.common.uncategorized);
+  const visible = pageThrough(list, month, seenKey === filterKey ? pages : 1);
   const summary = totals(data, list);
   const setFilter = <K extends keyof Filters>(key: K, value: Filters[K]) => setFilters((f) => ({ ...f, [key]: value }));
 
@@ -118,7 +141,7 @@ export function TransactionsView() {
         {list.length === 0 ? (
           <EmptyMonth month={month} transactions={data.transactions} onJump={goTo} filtered={transactionsInMonth(data, month).length > 0} />
         ) : (
-          groupByDate(list).map(([date, items]) => (
+          groupByDate(visible.items).map(([date, items]) => (
             <div key={date} className="mt-3 first:mt-0">
               <h3 className="p-2 text-xs font-semibold tracking-wide text-muted uppercase">
                 {format.date(date, { weekday: "long", day: "numeric", month: "long" })}
@@ -148,6 +171,11 @@ export function TransactionsView() {
             </div>
           ))
         )}
+        {visible.nextCursor ? (
+          <Button className="mt-3 min-h-11 w-full" onClick={() => setPages((count) => count + 1)}>
+            {text.loadMore}
+          </Button>
+        ) : null}
       </Card>
 
       <TransactionFormDialog open={editing !== null} onClose={() => setEditing(null)} transaction={editing ?? undefined} />

@@ -89,6 +89,7 @@
     "emptyMonth": "No hay movimientos en {month}.",
     "emptyElsewhere": "Hay movimientos en otros meses.",
     "showMonth": "Ver {month}",
+    "loadMore": "Cargar más",
     "export": "Exportar CSV",
     "exportHint": "Resumen de gastos del mes por categoría",
     "newTitle": "Nuevo movimiento",

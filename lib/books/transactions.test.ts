@@ -19,15 +19,15 @@ describe("listMonthTransactions", () => {
     const first = listMonthTransactions(movements, { month: "2026-11" });
 
     assert.equal(first.items.length, 30);
-    assert.equal(first.items[0]?.id, "t31");
-    assert.equal(first.items[29]?.id, "t02");
+    assert.equal(first.items[0]?.id, "t01");
+    assert.equal(first.items[29]?.id, "t30");
     assert.ok(first.nextCursor);
 
     const second = listMonthTransactions(movements, { month: "2026-11", cursor: first.nextCursor });
 
     assert.deepEqual(
       second.items.map((item) => item.id),
-      ["t01"],
+      ["t31"],
     );
     assert.equal(second.nextCursor, undefined);
   });
@@ -81,5 +81,16 @@ describe("saveTransaction", () => {
     });
 
     assert.deepEqual(result, { ok: false, missing: true });
+  });
+
+  it("treats a stored movement without a version as version 1", () => {
+    const movements = [{ id: "rent", amount: 10, categoryId: "home", date: "2026-11-02", note: "" }];
+
+    const saved = saveTransaction(movements, { ...movements[0], amount: 12, expectedVersion: 1 });
+
+    assert.equal(saved.ok, true);
+    if (!saved.ok) return;
+    assert.equal(saved.movements[0]?.amount, 12);
+    assert.equal(saved.movements[0]?.version, 2);
   });
 });

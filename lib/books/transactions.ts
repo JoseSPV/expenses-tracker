@@ -4,7 +4,8 @@ export interface Movement {
   categoryId: string;
   date: string;
   note: string;
-  version: number;
+  /** Missing on data saved before versions existed. Treated as 1. */
+  version?: number;
 }
 
 export interface MovementPage {
@@ -16,7 +17,7 @@ const PAGE_SIZE = 30;
 
 function byNewest(a: Movement, b: Movement): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;
-  return a.id < b.id ? 1 : -1;
+  return a.id < b.id ? -1 : 1;
 }
 
 export type SaveTransactionResult =
@@ -32,14 +33,15 @@ export function saveTransaction(
   const index = movements.findIndex((movement) => movement.id === input.id);
   const current = movements[index];
   if (!current) return { ok: false, missing: true };
-  if (current.version !== input.expectedVersion) return { ok: false, current };
+  const version = current.version ?? 1;
+  if (version !== input.expectedVersion) return { ok: false, current: { ...current, version } };
   const saved: Movement = {
     id: input.id,
     amount: input.amount,
     categoryId: input.categoryId,
     date: input.date,
     note: input.note,
-    version: current.version + 1,
+    version: version + 1,
   };
   const next = movements.slice();
   next[index] = saved;

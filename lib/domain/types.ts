@@ -20,6 +20,8 @@ export interface Transaction {
   categoryId: string;
   date: ISODate;
   note: string;
+  /** Missing on data saved before versions existed. Treated as 1. */
+  version?: number;
 }
 
 /** Monthly limit per expense category id, reused every month. */
