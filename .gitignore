@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Google client secret downloaded from Cloud Console. It already lives in Supabase.
+client_secret_*.json
+
 # vercel
 .vercel
 

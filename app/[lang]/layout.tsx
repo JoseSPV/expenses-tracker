@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import { readPerson } from "@/lib/session/person";
 import { themeInitScript } from "@/components/layout/theme";
 import { ToastProvider } from "@/components/ui/toast";
 import { hasLocale, locales } from "@/i18n/config";
@@ -30,6 +31,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const dict = await getDictionary();
+  const person = await readPerson();
 
   return (
     // The theme script sets data-theme before hydration.
@@ -40,7 +42,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <I18nProvider locale={lang} dict={dict}>
           <ToastProvider>
-            <AppShell>{children}</AppShell>
+            <AppShell person={person}>{children}</AppShell>
           </ToastProvider>
         </I18nProvider>
       </body>

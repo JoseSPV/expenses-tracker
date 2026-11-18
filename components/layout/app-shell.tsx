@@ -7,9 +7,11 @@ import { ChevronLeft, ChevronRight, Database, Plus, SunMoon } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { TransactionFormDialog } from "@/features/transactions/transaction-form-dialog";
 import { useI18n } from "@/i18n/i18n-provider";
-import { signInProblem, type SignInProblem } from "@/lib/session/google-sign-in";
+import { signInProblem } from "@/lib/session/google-sign-in";
 import { homeScreen } from "@/lib/session/home-screen";
-import { currentSession, googleSignInConfigured, listBooks } from "@/lib/session/placeholders";
+import { listBooks, type Person } from "@/lib/session/placeholders";
+import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
 import { DataDialog } from "./data-dialog";
 import { MonthProvider, useMonth } from "./month-context";
@@ -88,38 +90,60 @@ function MonthPicker() {
 function SignedOutBar() {
   const { dict, locale } = useI18n();
   const text = dict.shell;
-  const [problem, setProblem] = useState<SignInProblem | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  const openBooks = () => {
-    setProblem(signInProblem({ online: navigator.onLine, configured: googleSignInConfigured }));
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("auth") === "error") setMessage(text.signInFailed);
+  }, [text.signInFailed]);
+
+  const openBooks = async () => {
+    const problem = signInProblem({ online: navigator.onLine, configured: isSupabaseConfigured() });
+    if (problem === "offline") {
+      setMessage(text.signInOffline);
+      return;
+    }
+    if (problem) {
+      setMessage(text.signInUnavailable);
+      return;
+    }
+    setMessage(null);
+    setPending(true);
+    const { error } = await createBrowserSupabase().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) {
+      setPending(false);
+      setMessage(text.signInFailed);
+    }
   };
 
   return (
     <div className="flex w-full basis-full flex-wrap items-center gap-x-3 gap-y-1">
       <p className="text-sm font-medium">{text.signedOut}</p>
-      <Button variant="primary" className="min-h-11" onClick={openBooks}>
+      <Button variant="primary" className="min-h-11" onClick={openBooks} disabled={pending} aria-busy={pending}>
         {text.yourBooks}
       </Button>
       <Link href={hrefFor(locale, "privacy")} className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline">
         {text.privacy}
       </Link>
-      {problem ? (
+      {message ? (
         <p role="status" className="w-full text-sm text-danger">
-          {problem === "offline" ? text.signInOffline : text.signInUnavailable}
+          {message}
         </p>
       ) : null}
     </div>
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, person }: { children: ReactNode; person: Person | null }) {
   const { locale, dict } = useI18n();
   const pathname = usePathname();
   const active = activeNavItem(pathname, locale);
-  const session = currentSession();
-  const books = session.status === "signed-in" ? listBooks() : null;
+  const books = person ? listBooks() : null;
   const screen = homeScreen({
-    signedIn: session.status === "signed-in",
+    signedIn: person !== null,
     books: books === null ? 0 : books.ok ? books.books.length : "unknown",
   });
   const trial = screen === "trial";
@@ -144,7 +168,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Sidebar activeSegment={active?.segment} showSections={trial} />
         <div className="min-w-0">
           <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b bg-bg/85 px-4 py-3 backdrop-blur-md md:px-8">
-            {session.status === "signed-in" ? <SignedInBar person={session.person} /> : <SignedOutBar />}
+            {person ? <SignedInBar person={person} /> : <SignedOutBar />}
             <h1 ref={headingRef} tabIndex={-1} className="min-w-0 flex-1 truncate text-xl font-bold sm:text-[22px]">
               {title}
             </h1>

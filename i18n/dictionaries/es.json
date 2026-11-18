@@ -24,6 +24,7 @@
     "yourBooks": "Tus libros",
     "signInOffline": "Hace falta conexión para entrar.",
     "signInUnavailable": "El acceso con Google todavía no está conectado.",
+    "signInFailed": "No se ha podido entrar con Google.",
     "privacy": "Privacidad",
     "noBooks": "No tienes libros.",
     "bookName": "Nombre del libro",

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { defaultLocale, hasLocale, locales, type Locale } from "./i18n/config";
+import { updateSession } from "./lib/supabase/update-session";
 
 /** Picks the first supported language from `Accept-Language`, honouring q-values. */
 function preferredLocale(request: NextRequest): Locale {
@@ -18,15 +19,17 @@ function preferredLocale(request: NextRequest): Locale {
   return language ?? defaultLocale;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hasLocalePrefix = locales.some(
-    (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
-  );
-  if (hasLocalePrefix) return;
+  // The Google return route has no language prefix. A redirect would drop the code.
+  if (pathname === "/auth" || pathname.startsWith("/auth/")) return updateSession(request);
 
-  request.nextUrl.pathname = `/${preferredLocale(request)}${pathname}`;
-  return NextResponse.redirect(request.nextUrl);
+  const hasLocalePrefix = locales.some((locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`));
+  if (!hasLocalePrefix) {
+    request.nextUrl.pathname = `/${preferredLocale(request)}${pathname}`;
+    return NextResponse.redirect(request.nextUrl);
+  }
+  return updateSession(request);
 }
 
 export const config = {

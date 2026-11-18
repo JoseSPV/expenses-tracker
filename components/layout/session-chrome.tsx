@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/ui/indicators";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/i18n/i18n-provider";
 import { hrefFor } from "@/components/layout/navigation";
-import { createBook, deleteAccount, listBooks, listInvites, respondToInvite, signOut, type Person } from "@/lib/session/placeholders";
+import { signOutOfGoogle } from "@/lib/session/sign-out";
+import { createBook, deleteAccount, listBooks, listInvites, respondToInvite, type Person } from "@/lib/session/placeholders";
 
 function Unavailable({ message }: { message: string }) {
   return (
@@ -151,8 +152,9 @@ export function SignedInBar({ person }: { person: Person }) {
     setError(null);
   };
 
-  const confirmOut = () => {
-    setError(signOut().ok ? null : text.signOutUnavailable);
+  const confirmOut = async () => {
+    const result = await signOutOfGoogle();
+    if (!result.ok) setError(text.signOutUnavailable);
   };
 
   const confirmDelete = () => {
