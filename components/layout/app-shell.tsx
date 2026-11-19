@@ -9,18 +9,19 @@ import { TransactionFormDialog } from "@/features/transactions/transaction-form-
 import { useI18n } from "@/i18n/i18n-provider";
 import { signInProblem } from "@/lib/session/google-sign-in";
 import { homeScreen } from "@/lib/session/home-screen";
-import { mainRegion, shellTitle } from "@/lib/session/shell-content";
-import { listBooks, type Person } from "@/lib/session/placeholders";
+import { shellTitle } from "@/lib/session/shell-content";
+import type { Person } from "@/lib/session/placeholders";
+import { bindAccount } from "@/lib/store/app-store";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
 import { DataDialog } from "./data-dialog";
 import { MonthProvider, useMonth } from "./month-context";
 import { NAV_ITEMS, activeNavItem, hrefFor } from "./navigation";
-import { BookUnavailable, BooksUnknown, NoBooks, SignedInBar } from "./session-chrome";
+import { SignedInBar } from "./session-chrome";
 import { toggleTheme } from "./theme";
 
-function Sidebar({ activeSegment, showSections }: { activeSegment?: string; showSections: boolean }) {
+function Sidebar({ activeSegment }: { activeSegment?: string }) {
   const { locale, dict } = useI18n();
   const navRef = useRef<HTMLElement>(null);
 
@@ -35,16 +36,14 @@ function Sidebar({ activeSegment, showSections }: { activeSegment?: string; show
     <aside
       className={cn(
         "md:sticky md:top-0 md:flex md:h-screen md:flex-col md:gap-7 md:border-r md:bg-surface md:px-4 md:py-6",
-        showSections
-          ? "fixed inset-x-0 bottom-0 z-20 border-t bg-surface px-1 pt-1.5 pb-[calc(6px+env(safe-area-inset-bottom))] md:border-t-0"
-          : "hidden",
+        "fixed inset-x-0 bottom-0 z-20 border-t bg-surface px-1 pt-1.5 pb-[calc(6px+env(safe-area-inset-bottom))] md:border-t-0",
       )}
     >
       <Link href={hrefFor(locale, "")} className="hidden items-center gap-2.5 px-2 text-lg font-bold md:flex">
         <span className="grid size-8 place-items-center rounded-[10px] bg-primary font-extrabold text-primary-fg">J</span>
         {dict.meta.appName}
       </Link>
-      {showSections ? <nav
+      <nav
         ref={navRef}
         aria-label={dict.nav.label}
         className="flex gap-1 overflow-x-auto [scrollbar-width:none] md:flex-col md:overflow-visible md:gap-1 [&::-webkit-scrollbar]:hidden"
@@ -66,7 +65,7 @@ function Sidebar({ activeSegment, showSections }: { activeSegment?: string; show
             </Link>
           );
         })}
-      </nav> : null}
+      </nav>
     </aside>
   );
 }
@@ -148,20 +147,13 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
   const { locale, dict } = useI18n();
   const pathname = usePathname();
   const active = activeNavItem(pathname, locale);
-  const books = person ? listBooks() : null;
-  const screen = homeScreen({
-    signedIn: person !== null,
-    books: books === null ? 0 : books.ok ? books.books.length : "unknown",
-  });
-  const trial = screen === "trial";
+  const account = homeScreen({ signedIn: person !== null }) === "account";
+  bindAccount(account ? person?.email || "signed-in" : null);
   const privacy = pathname === hrefFor(locale, "privacy");
-  const region = mainRegion({ screen, privacy });
   const title = shellTitle({
     privacy,
-    trial,
     privacyTitle: dict.privacy.title,
     sectionTitle: active ? dict.nav[active.labelKey] : null,
-    booksTitle: dict.shell.yourBooks,
     appName: dict.meta.appName,
   });
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -180,36 +172,29 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
   return (
     <MonthProvider>
       <div className="grid min-h-screen md:grid-cols-[232px_minmax(0,1fr)]">
-        <Sidebar activeSegment={active?.segment} showSections={trial} />
+        <Sidebar activeSegment={active?.segment} />
         <div className="min-w-0">
           <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b bg-bg/85 px-4 py-3 backdrop-blur-md md:px-8">
             {person ? <SignedInBar person={person} /> : <SignedOutBar />}
             <h1 ref={headingRef} tabIndex={-1} className="min-w-0 flex-1 truncate text-xl font-bold sm:text-[22px]">
               {title}
             </h1>
-            {trial && active?.usesMonth ? <MonthPicker /> : null}
+            {active?.usesMonth ? <MonthPicker /> : null}
             <div className="flex gap-1.5">
-              {trial ? (
-                <Button variant="ghost" size="icon" onClick={() => setOpenDialog("data")} title={dict.shell.manageData} aria-label={dict.shell.manageData}>
-                  <Database size={18} />
-                </Button>
-              ) : null}
+              <Button variant="ghost" size="icon" onClick={() => setOpenDialog("data")} title={dict.shell.manageData} aria-label={dict.shell.manageData}>
+                <Database size={18} />
+              </Button>
               <Button variant="ghost" size="icon" onClick={toggleTheme} title={dict.shell.toggleTheme} aria-label={dict.shell.toggleTheme}>
                 <SunMoon size={18} />
               </Button>
-              {trial ? (
-                <Button variant="primary" onClick={() => setOpenDialog("transaction")} aria-label={dict.shell.addTransaction}>
-                  <Plus size={16} aria-hidden />
-                  <span className="max-sm:hidden">{dict.shell.addTransaction}</span>
-                </Button>
-              ) : null}
+              <Button variant="primary" onClick={() => setOpenDialog("transaction")} aria-label={dict.shell.addTransaction}>
+                <Plus size={16} aria-hidden />
+                <span className="max-sm:hidden">{dict.shell.addTransaction}</span>
+              </Button>
             </div>
           </header>
           <main className="max-w-7xl px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:pb-12">
-            {region === "page" ? children : null}
-            {region === "no-books" ? <NoBooks /> : null}
-            {region === "books-unknown" ? <BooksUnknown /> : null}
-            {region === "book" ? <BookUnavailable /> : null}
+            {children}
           </main>
         </div>
       </div>

@@ -5,9 +5,9 @@ Joenance te ayuda a registrar tus gastos e ingresos del día a día, controlar p
 ## Antes de empezar
 
 - **Sin entrar, los datos están solo en este navegador.** Si borras los datos del sitio o cambias de navegador, esa prueba no te sigue.
-- **Tus libros** entra con Google. La sesión se recuerda en este navegador. Los libros todavía no se guardan: al entrar verás tu nombre y que no se ha podido saber cuántos libros tienes. **Salir** vuelve a la prueba de este navegador. **Privacidad**, en la misma barra, explica qué se guardará.
+- **Tus libros** entra con Google. Dentro ves las mismas secciones, vacías: no aparece la prueba ni sus datos de ejemplo. Lo que anotes con la sesión se queda en este navegador, aparte de la prueba, hasta que la cuenta lo guarde. **Salir** vuelve a la prueba. **Privacidad**, en la misma barra, explica qué se guardará.
 - **La primera vez** la prueba carga datos de demostración (seis meses de ejemplo) para que veas cómo funciona. Si ya usabas la versión anterior de la app, tus gastos, categorías y presupuestos se importan automáticamente en su lugar.
-- **Empezar de cero:** abre **Gestionar datos** (icono de base de datos, arriba a la derecha) y pulsa **Borrar todos los movimientos**. Se conservan categorías, presupuestos, objetivos, recibos y cuentas; bórralos o edítalos desde su sección si no los quieres.
+- **Empezar de cero:** abre **Gestionar datos** (icono de base de datos, arriba a la derecha) y pulsa **Borrar todos los datos**. Se vacían movimientos, categorías, presupuestos, objetivos, recibos y cuentas. **Cargar datos de demostración** vuelve a poner el ejemplo completo.
 
 ## La barra superior
 

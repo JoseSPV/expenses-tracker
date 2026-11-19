@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmButton, Dialog } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/i18n-provider";
-import { clearTransactions, loadDemoData } from "@/lib/store/actions";
+import { clearAllData, loadDemoData } from "@/lib/store/actions";
 
 export function DataDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { dict } = useI18n();
@@ -40,12 +40,12 @@ export function DataDialog({ open, onClose }: { open: boolean; onClose: () => vo
           />
         </section>
         <section className="flex flex-col items-start gap-2">
-          <h3 className="font-semibold">{text.clearTransactions}</h3>
-          <p className="text-sm text-muted">{text.clearTransactionsHint}</p>
+          <h3 className="font-semibold">{text.clearAll}</h3>
+          <p className="text-sm text-muted">{text.clearAllHint}</p>
           <ConfirmButton
-            label={text.clearTransactions}
-            confirmLabel={text.clearTransactionsConfirm}
-            onConfirm={() => run(clearTransactions, text.transactionsCleared)}
+            label={text.clearAll}
+            confirmLabel={text.clearAllConfirm}
+            onConfirm={() => run(clearAllData, text.allCleared)}
           />
         </section>
       </div>

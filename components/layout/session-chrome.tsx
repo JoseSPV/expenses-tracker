@@ -4,101 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { EmptyState } from "@/components/ui/indicators";
-import { Input } from "@/components/ui/input";
 import { useI18n } from "@/i18n/i18n-provider";
 import { hrefFor } from "@/components/layout/navigation";
 import { signOutOfGoogle } from "@/lib/session/sign-out";
-import { createBook, deleteAccount, listBooks, listInvites, respondToInvite, type Person } from "@/lib/session/placeholders";
+import { deleteAccount, type Person } from "@/lib/session/placeholders";
 
 function Unavailable({ message }: { message: string }) {
   return (
     <p role="status" className="text-sm text-danger">
       {message}
     </p>
-  );
-}
-
-export function NoBooks() {
-  const { dict } = useI18n();
-  const text = dict.shell;
-  const [name, setName] = useState("Personal");
-  const [problem, setProblem] = useState<"name" | "unavailable" | "invite" | null>(null);
-  const invites = listInvites();
-
-  const create = () => {
-    const trimmed = name.trim();
-    if (!trimmed) {
-      setProblem("name");
-      return;
-    }
-    setProblem(createBook(trimmed).ok ? null : "unavailable");
-  };
-
-  const answer = (id: string, accept: boolean) => {
-    setProblem(respondToInvite(id, accept).ok ? null : "invite");
-  };
-
-  return (
-    <section className="mx-auto flex max-w-md flex-col gap-4">
-      <EmptyState>{text.noBooks}</EmptyState>
-      <label className="flex flex-col gap-1.5 text-sm font-medium">
-        {text.bookName}
-        <Input className="h-11" value={name} onChange={(event) => setName(event.target.value)} />
-      </label>
-      <Button variant="primary" className="min-h-11" onClick={create}>
-        {text.createBook}
-      </Button>
-      {problem === "name" ? <Unavailable message={text.createBookNeedsName} /> : null}
-      {problem === "unavailable" ? <Unavailable message={text.createBookUnavailable} /> : null}
-      {invites.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold">{text.pendingInvites}</h2>
-          <ul className="flex flex-col gap-2">
-            {invites.map((invite) => (
-              <li key={invite.id} className="flex flex-wrap items-center gap-2">
-                <span className="min-w-0 flex-1 text-sm">{invite.bookName}</span>
-                <Button className="min-h-11" onClick={() => answer(invite.id, true)}>
-                  {text.acceptInvite}
-                </Button>
-                <Button className="min-h-11" onClick={() => answer(invite.id, false)}>
-                  {text.declineInvite}
-                </Button>
-              </li>
-            ))}
-          </ul>
-          {problem === "invite" ? <Unavailable message={text.inviteUnavailable} /> : null}
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
-export function BooksUnknown() {
-  const { dict } = useI18n();
-  const text = dict.shell;
-  const [failed, setFailed] = useState(true);
-
-  const retry = () => {
-    setFailed(!listBooks().ok);
-  };
-
-  return (
-    <section className="mx-auto flex max-w-md flex-col items-center gap-4 py-6">
-      {failed ? <Unavailable message={text.booksUnknown} /> : null}
-      <Button variant="primary" className="min-h-11" onClick={retry}>
-        {text.retry}
-      </Button>
-    </section>
-  );
-}
-
-export function BookUnavailable() {
-  const { dict } = useI18n();
-  return (
-    <section className="mx-auto max-w-md py-6">
-      <EmptyState>{dict.shell.bookUnavailable}</EmptyState>
-    </section>
   );
 }
 

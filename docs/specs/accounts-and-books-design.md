@@ -255,7 +255,7 @@ Ninguna vista de la nube se queda en blanco. Cada una tiene carga, error, vacío
 
 **Sin sesión.** En la cabecera, visible en móvil y en escritorio, se lee que no has entrado. Al lado hay un botón, «Tus libros», que empieza el acceso con Google. Las ocho secciones siguen enseñando la prueba de ese navegador.
 
-**Sin libros.** Con sesión y cero libros no se abre un resumen vacío. Se ve un estado vacío: no tienes libros, y un botón para crear uno. Si hay invitaciones pendientes, salen en esa misma pantalla.
+**Con sesión.** Las ocho secciones se abren igual, vacías. No se enseña la prueba ni un error por no tener libros. Lo anotado con la sesión no se copia desde la prueba ni se mezcla con ella. Hasta que la cuenta lo guarde, ese documento vive en este navegador, en otra clave.
 
 **Cada vista con libro.** El esqueleto es de esa vista, no de las demás. Si la petición falla, se muestra el error y un reintento; si ya había una página, se conserva y el aviso dice que no se pudo actualizar. El vacío es el de esa lista (sin movimientos este mes, sin objetivos, sin categorías), no un fallo. Guardar, borrar o aceptar dejan el control en espera hasta la respuesta. Un error de red no se presenta como un conflicto de versión.
 
@@ -264,9 +264,9 @@ La prueba local conserva, además, el esqueleto hasta hidratar y el aviso de «n
 | Recorrido | Cargando | Éxito | Error | Vacío | Atrasado | Sin red | Sin permiso | Esperando guardado |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Prueba, sin sesión | Esqueleto hasta hidratar | Las secciones de hoy, con el aviso y el botón «Tus libros» | El botón de acceso se puede reintentar | La prueba vacía, con su texto | — | La prueba sigue; el acceso dice que hace falta red | Si se cancela Google, se sigue en la prueba | El botón espera la vuelta de Google |
-| Entrar con Google | Botón en espera | Redirección al último libro, a Personal la primera vez, o al estado sin libros | Se puede reintentar el acceso; no se crea un libro a medias | — | — | El acceso no arranca y lo dice | Cuenta de Google cancelada: se vuelve a la prueba | El botón no se confirma antes de la vuelta |
+| Entrar con Google | Botón en espera | Las ocho secciones, vacías, sin la prueba | Se puede reintentar el acceso | Sin movimientos ni categorías: el vacío de cada sección | — | El acceso no arranca y lo dice | Cuenta de Google cancelada: se vuelve a la prueba | El botón no se confirma antes de la vuelta |
 | Cada sección con libro | Esqueleto de esa vista | La primera página o el agregado | Error con reintento; las otras secciones no se bloquean | El texto de vacío de esa lista, y un botón de cargar más solo si hay cursor | Página ya vista más aviso de que no se pudo refrescar | Igual que el error de red | Libro ajeno o sesión caducada: fuera de ese libro | El diálogo espera; no pinta el dato nuevo |
-| Sin libros | — | — | Reintento si no se pudo saber cuántos libros hay | Estado vacío y botón de crear; invitaciones pendientes si las hay | — | No se crea un libro a ciegas | — | Crear espera el id nuevo y luego abre esa ruta |
+| Sin libros | — | Las secciones siguen abiertas y vacías | No es un error y no hay reintento | El vacío de cada sección | — | No se inventan datos | — | — |
 | Control de libros | Lista en espera | Nombres, el abierto marcado | No se cambia de libro | El mismo estado vacío | — | No cambia de libro | — | Crear espera el id nuevo y luego abre esa ruta |
 | Invitaciones al entrar | — | Aceptar abre el libro; rechazar la quita | Se puede reintentar | Sin invitaciones: no se muestra | — | No se acepta a ciegas | Email distinto: no aparece | Aceptar espera |
 | Miembros | — | Nombre, email y acciones del creador | La acción se avisa y la lista no miente | Solo el creador | La lista es la del último carga | La acción no sigue | Quien se unió no ve las acciones de creador | La fila no desaparece hasta la respuesta |

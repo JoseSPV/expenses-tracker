@@ -1,13 +1,26 @@
 import { canonicalizeDate } from "@/lib/domain/dates";
 import type { AppData } from "@/lib/domain/types";
 import type { SeedText } from "@/i18n/types";
+import { documentForVisit, emptyAppData } from "./document-for-visit";
 import { hasLegacyData, migrateLegacyData } from "./legacy-migration";
 import { createSeedData } from "./seed";
 
-const STORAGE_KEY = "expenses-tracker:data:v1";
+const TRIAL_KEY = "expenses-tracker:data:v1";
 
 const listeners = new Set<() => void>();
 let data: AppData | null = null;
+let accountEmail: string | null = null;
+
+/** Signed-in data uses its own key. Null keeps the trial key. */
+export function bindAccount(email: string | null): void {
+  if (typeof window === "undefined" || accountEmail === email) return;
+  accountEmail = email;
+  data = null;
+}
+
+function storageKey(): string {
+  return accountEmail === null ? TRIAL_KEY : `expenses-tracker:account:v1:${accountEmail}`;
+}
 
 function isAppData(value: unknown): value is AppData {
   const candidate = value as AppData;
@@ -20,8 +33,8 @@ function isAppData(value: unknown): value is AppData {
   );
 }
 
-function readStored(): AppData | null {
-  const raw = localStorage.getItem(STORAGE_KEY);
+function readKey(key: string): AppData | null {
+  const raw = localStorage.getItem(key);
   if (!raw) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
@@ -32,12 +45,12 @@ function readStored(): AppData | null {
   } catch {
     // Fall through: keep a copy instead of silently overwriting what the user had.
   }
-  localStorage.setItem(`${STORAGE_KEY}:unreadable-${Date.now()}`, raw);
+  localStorage.setItem(`${key}:unreadable-${Date.now()}`, raw);
   return null;
 }
 
 function persist(): void {
-  if (data) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  if (data) localStorage.setItem(storageKey(), JSON.stringify(data));
 }
 
 function emit(): void {
@@ -45,15 +58,22 @@ function emit(): void {
 }
 
 function onStorage(event: StorageEvent): void {
-  if (event.key !== STORAGE_KEY) return;
-  data = readStored() ?? data;
+  if (event.key !== storageKey()) return;
+  data = readKey(storageKey()) ?? data;
   emit();
 }
 
-/** Lazily loads stored data, migrates the legacy format, or seeds demo data on first visit. */
+/** Lazily loads the visit. The trial may seed demo data. A signed-in visit starts empty and never reads the trial. */
 export function getSnapshot(seed: SeedText): AppData {
   if (!data) {
-    data = readStored() ?? (hasLegacyData(localStorage) ? migrateLegacyData(localStorage, seed) : createSeedData(seed));
+    const stored = readKey(storageKey());
+    const trialSeed =
+      accountEmail === null && !stored
+        ? hasLegacyData(localStorage)
+          ? migrateLegacyData(localStorage, seed)
+          : createSeedData(seed)
+        : emptyAppData();
+    data = documentForVisit({ account: accountEmail !== null, stored, trialSeed });
     persist();
   }
   return data;

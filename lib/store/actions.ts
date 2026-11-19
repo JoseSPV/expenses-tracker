@@ -5,6 +5,7 @@ import type { Account, AppData, Category, CategoryType, Goal, ISODate, Recurring
 import type { SeedText } from "@/i18n/types";
 import { saveTransaction as saveMovement } from "@/lib/books/transactions";
 import { replaceData, updateData } from "./app-store";
+import { emptyAppData } from "./document-for-visit";
 import { createSeedData } from "./seed";
 
 const newId = () => crypto.randomUUID();
@@ -56,10 +57,7 @@ export const deleteTransaction = (id: string) =>
     d.transactions = remove(d.transactions, id);
   });
 
-export const clearTransactions = () =>
-  updateData((d) => {
-    d.transactions = [];
-  });
+export const clearAllData = () => replaceData(emptyAppData());
 
 // Categories
 

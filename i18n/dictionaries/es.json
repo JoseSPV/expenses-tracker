@@ -85,13 +85,13 @@
     "title": "Gestionar datos",
     "description": "Tus datos se guardan solo en este navegador.",
     "loadDemo": "Cargar datos de demostración",
-    "loadDemoHint": "Sustituye todos tus datos por un ejemplo de seis meses.",
+    "loadDemoHint": "Sustituye todo por el ejemplo de seis meses: movimientos, categorías, presupuestos, objetivos, recibos y cuentas.",
     "loadDemoConfirm": "Sí, sustituir mis datos",
-    "clearTransactions": "Borrar todos los movimientos",
-    "clearTransactionsHint": "Elimina todos los movimientos. Categorías, presupuestos, objetivos, recibos y cuentas se mantienen. No se puede deshacer.",
-    "clearTransactionsConfirm": "Sí, borrar movimientos",
+    "clearAll": "Borrar todos los datos",
+    "clearAllHint": "Vacía movimientos, categorías, presupuestos, objetivos, recibos y cuentas. No se puede deshacer.",
+    "clearAllConfirm": "Sí, borrar todo",
     "demoLoaded": "Datos de demostración cargados",
-    "transactionsCleared": "Movimientos borrados"
+    "allCleared": "Datos borrados"
   },
   "dashboard": {
     "income": "Ingresos",

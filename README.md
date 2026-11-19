@@ -2,7 +2,7 @@
 
 **Joenance** — a personal finance app built with Next.js. Track daily expenses and income, set monthly budgets per category, save towards goals, follow recurring bills and net worth, and run quick financial calculators.
 
-Spanish UI, EUR currency. Without an account, the trial lives in the browser's `localStorage`. «Tus libros» signs in with Google; books themselves are not stored yet ([ADR-0014](./docs/adr/0014-google-sign-in.md)).
+Spanish UI, EUR currency. Without an account, the trial lives in the browser's `localStorage`. «Tus libros» signs in with Google and opens the same sections, empty. That activity stays in this browser, separate from the trial, until the account stores it ([ADR-0014](./docs/adr/0014-google-sign-in.md)).
 
 - **User guide (Spanish):** [docs/user-guide.md](./docs/user-guide.md)
 - **Architecture decisions:** [docs/adr/](./docs/adr/)

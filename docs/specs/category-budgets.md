@@ -140,7 +140,7 @@ No test runner in the repo. Do not add one for this feature.
 - [ ] Each visible month, when any budget exists, shows a wallet icon beside Exportar and the total. Its color is the worst category status in that month.
 - [ ] Activating the icon toggles the per-category rows for that month. Rows use saved expenses only, fullest first.
 - [ ] A category filter does not change the icon or the rows.
-- [ ] `Borrar todos los datos` leaves budgets in place.
+- [ ] `Borrar todos los datos` clears budgets along with the rest of the trial. `Cargar datos de demostración` restores them.
 
 ## Open questions
 

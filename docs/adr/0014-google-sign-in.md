@@ -24,7 +24,7 @@ Signing in is Google, through Supabase. The trial without an account stays in th
 - The session is an HttpOnly cookie. `proxy.ts` refreshes it. The server reads `getClaims()`, not `getSession()`.
 - The browser receives only the project URL and the publishable key (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`). The URL must be `https://…supabase.co`. A service-role key is refused.
 - `features/` does not import the Supabase client. The shell starts sign-in. The server reads who is signed in.
-- Books, invites, copy, and deleting the account are not stored yet. Until they are, a signed-in person does not see the trial, and the app says it could not count their books.
+- A signed-in person sees the eight sections empty. The trial is not shown and is not copied. What they add is stored in this browser, apart from the trial, until the account itself stores it. Invites and deleting the account are not stored yet.
 
 ## Consequences
 

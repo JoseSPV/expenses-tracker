@@ -1,9 +1,6 @@
-export type HomeScreen = "trial" | "books-unknown" | "no-books" | "book";
+export type HomeScreen = "trial" | "account";
 
-/** Which screen the shell paints. A failed book list is not the same as having zero books. */
-export function homeScreen(input: { signedIn: boolean; books: number | "unknown" }): HomeScreen {
-  if (!input.signedIn) return "trial";
-  if (input.books === "unknown") return "books-unknown";
-  if (input.books === 0) return "no-books";
-  return "book";
+/** Signed in opens the app. Signed out stays on the browser trial. Book count does not choose the screen. */
+export function homeScreen(input: { signedIn: boolean }): HomeScreen {
+  return input.signedIn ? "account" : "trial";
 }
