@@ -2,7 +2,7 @@
 
 **Joenance** — a personal finance app built with Next.js. Track daily expenses and income, set monthly budgets per category, save towards goals, follow recurring bills and net worth, and run quick financial calculators.
 
-Spanish UI, EUR currency, no account: all data lives in the browser's `localStorage`.
+Spanish UI, EUR currency. Without an account, the trial lives in the browser's `localStorage`. «Tus libros» signs in with Google; books themselves are not stored yet ([ADR-0014](./docs/adr/0014-google-sign-in.md)).
 
 - **User guide (Spanish):** [docs/user-guide.md](./docs/user-guide.md)
 - **Architecture decisions:** [docs/adr/](./docs/adr/)
@@ -19,6 +19,7 @@ Spanish UI, EUR currency, no account: all data lives in the browser's `localStor
 | Patrimonio | `/es/net-worth` | Assets, liabilities and monthly net-worth history |
 | Calculadoras | `/es/calculators` | Compound interest, loan payment, emergency fund |
 | Categorías | `/es/categories` | Create, rename, recolor and delete categories (with reassignment) |
+| Privacidad | `/es/privacy` | What an account stores, and how to take it or delete it |
 
 Light and dark themes, responsive layout (bottom navigation on mobile).
 
@@ -33,18 +34,26 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). It redirects to `/es`. On first load the app seeds six months of demo data, or migrates data from the previous version if it finds it (see [ADR-0012](./docs/adr/0012-domain-model-v1.md)).
 
+Google sign-in needs two public values in `.env.local` (this file is gitignored):
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
+```
+
+The URL must be the hosted project (`https://…supabase.co`). Do not put the service-role key in this file or anywhere in the app. Without the two values, the trial still runs and «Tus libros» says Google is not connected.
+
 | Script | Purpose |
 | --- | --- |
 | `npm run dev` | Development server (Turbopack) |
 | `npm run build` | Production build; also type-checks |
 | `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
-
-There is no test runner yet.
+| `npm test` | Unit tests for movements, the session, and the public Supabase config |
 
 ## Stack
 
-Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, `lucide-react`. No UI, chart, state or i18n libraries — see [ADR-0013](./docs/adr/0013-design-tokens-and-theming.md).
+Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, `lucide-react`, and `@supabase/ssr` for the Google session. No UI, chart, state or i18n libraries — see [ADR-0013](./docs/adr/0013-design-tokens-and-theming.md).
 
 ## Project structure
 
@@ -56,11 +65,15 @@ components/charts/       → SVG bar, line and donut charts
 components/layout/       → app shell, navigation, month picker context, theme
 lib/domain/              → pure business rules: types, dates, selectors, budgets, finance math
 lib/store/               → localStorage store, actions, demo seed, legacy migration
+lib/books/               → paged movement list and versioned save, used by the trial today
+lib/session/             → who is signed in, sign-out, and which screen the shell shows
+lib/supabase/            → public project config and the browser/server clients
 i18n/                    → locale config, dictionaries, formatters, provider
-proxy.ts                 → redirects paths without a locale prefix
+app/auth/callback/       → exchanges the Google code for the session cookie
+proxy.ts                 → locale redirect, and session refresh on each request
 ```
 
-Dependencies flow one way: `app` → `features` → `components` / `lib`. Views read data with `useAppData()` and write through `lib/store/actions.ts`; nothing else touches `localStorage`. Details in [ADR-0011](./docs/adr/0011-feature-modules-and-routes.md).
+Dependencies flow one way: `app` → `features` → `components` / `lib`. `features/` does not import Supabase. Views read the trial with `useAppData()` and write it through `lib/store/actions.ts`. The theme uses its own browser key. Details in [ADR-0011](./docs/adr/0011-feature-modules-and-routes.md) and [ADR-0014](./docs/adr/0014-google-sign-in.md).
 
 ## Internationalization
 
@@ -120,4 +133,4 @@ Once an ADR is accepted, implementation follows the decision — the AI's job is
 
 ## Deploy
 
-Any Next.js host works; [Vercel](https://vercel.com/new) is the simplest. The app has no environment variables or backend. See the [Next.js deployment docs](https://nextjs.org/docs/app/getting-started/deploying).
+The app is already deployed on Vercel. The trial works there with no environment. Google sign-in on that deployment needs the same two public variables in the Vercel project, and the Vercel URL added to the Supabase redirect allow list and the Google JavaScript origins. Do not create a second host. The service-role key stays in Supabase.

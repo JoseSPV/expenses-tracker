@@ -1,15 +1,16 @@
 ---
 tags: [expenses-tracker, auth]
 title: "ADR-0003: No authentication for POC"
-status: accepted
+status: superseded
 date: 2026-05-24
+superseded-by: ADR-0014
 ---
 
 # ADR-0003: No authentication for POC
 
 ## Status
 
-accepted
+superseded by [ADR-0014](./0014-google-sign-in.md). The text below is the original decision.
 
 ## Context
 

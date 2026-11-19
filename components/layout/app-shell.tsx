@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Database, Plus, SunMoon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransactionFormDialog } from "@/features/transactions/transaction-form-dialog";
 import { useI18n } from "@/i18n/i18n-provider";
 import { signInProblem } from "@/lib/session/google-sign-in";
 import { homeScreen } from "@/lib/session/home-screen";
+import { mainRegion, shellTitle } from "@/lib/session/shell-content";
 import { listBooks, type Person } from "@/lib/session/placeholders";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -87,15 +88,21 @@ function MonthPicker() {
   );
 }
 
+function subscribeToNothing() {
+  return () => {};
+}
+
+function googleReturnFailed(): boolean {
+  return new URLSearchParams(window.location.search).get("auth") === "error";
+}
+
 function SignedOutBar() {
   const { dict, locale } = useI18n();
   const text = dict.shell;
+  const returnedWithError = useSyncExternalStore(subscribeToNothing, googleReturnFailed, () => false);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("auth") === "error") setMessage(text.signInFailed);
-  }, [text.signInFailed]);
+  const shown = message ?? (returnedWithError ? text.signInFailed : null);
 
   const openBooks = async () => {
     const problem = signInProblem({ online: navigator.onLine, configured: isSupabaseConfigured() });
@@ -128,9 +135,9 @@ function SignedOutBar() {
       <Link href={hrefFor(locale, "privacy")} className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline">
         {text.privacy}
       </Link>
-      {message ? (
+      {shown ? (
         <p role="status" className="w-full text-sm text-danger">
-          {message}
+          {shown}
         </p>
       ) : null}
     </div>
@@ -148,7 +155,15 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
   });
   const trial = screen === "trial";
   const privacy = pathname === hrefFor(locale, "privacy");
-  const title = trial ? (privacy ? dict.privacy.title : active ? dict.nav[active.labelKey] : dict.meta.appName) : dict.shell.yourBooks;
+  const region = mainRegion({ screen, privacy });
+  const title = shellTitle({
+    privacy,
+    trial,
+    privacyTitle: dict.privacy.title,
+    sectionTitle: active ? dict.nav[active.labelKey] : null,
+    booksTitle: dict.shell.yourBooks,
+    appName: dict.meta.appName,
+  });
   const headingRef = useRef<HTMLHeadingElement>(null);
   const skipFocus = useRef(true);
   const [openDialog, setOpenDialog] = useState<"transaction" | "data" | null>(null);
@@ -191,10 +206,10 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
             </div>
           </header>
           <main className="max-w-7xl px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:pb-12">
-            {screen === "trial" ? children : null}
-            {screen === "no-books" ? <NoBooks /> : null}
-            {screen === "books-unknown" ? <BooksUnknown /> : null}
-            {screen === "book" ? <BookUnavailable /> : null}
+            {region === "page" ? children : null}
+            {region === "no-books" ? <NoBooks /> : null}
+            {region === "books-unknown" ? <BooksUnknown /> : null}
+            {region === "book" ? <BookUnavailable /> : null}
           </main>
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { defaultLocale } from "@/i18n/config";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 /** Clears the session cookie and returns to the trial. */
@@ -12,5 +13,5 @@ export async function signOutOfGoogle(): Promise<{ ok: false }> {
   } catch {
     return { ok: false };
   }
-  redirect("/es");
+  redirect(`/${defaultLocale}`);
 }

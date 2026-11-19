@@ -9,7 +9,7 @@ date: 2026-05-24
 
 ## Status
 
-accepted
+accepted for the no-account trial. Google sign-in is [ADR-0014](./0014-google-sign-in.md). A signed-in book is specified in [the accounts spec](../specs/accounts-and-books-design.md) and is not stored yet.
 
 ## Context
 

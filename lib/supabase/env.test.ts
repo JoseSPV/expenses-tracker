@@ -30,4 +30,22 @@ describe("supabaseEnv", () => {
     process.env[KEY] = "sb_publishable_example";
     assert.deepEqual(supabaseEnv(), { url: "https://example.supabase.co", key: "sb_publishable_example" });
   });
+
+  it("refuses a URL that is not the hosted project", () => {
+    process.env[KEY] = "sb_publishable_example";
+    for (const url of ["http://example.supabase.co", "https://evil.example", "https://user:pass@example.supabase.co"]) {
+      process.env[URL] = url;
+      assert.equal(supabaseEnv(), null);
+    }
+  });
+
+  it("refuses the service-role key", () => {
+    process.env[URL] = "https://example.supabase.co";
+    process.env[KEY] = "service_role";
+    assert.equal(supabaseEnv(), null);
+
+    const payload = btoa(JSON.stringify({ role: "service_role" }));
+    process.env[KEY] = `header.${payload}.signature`;
+    assert.equal(supabaseEnv(), null);
+  });
 });

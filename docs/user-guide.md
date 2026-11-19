@@ -4,8 +4,9 @@ Joenance te ayuda a registrar tus gastos e ingresos del día a día, controlar p
 
 ## Antes de empezar
 
-- **Tus datos se guardan solo en este navegador.** No hay cuenta ni servidor. Si borras los datos del sitio o cambias de navegador o dispositivo, no los verás.
-- **La primera vez** la app carga datos de demostración (seis meses de ejemplo) para que veas cómo funciona. Si ya usabas la versión anterior de la app, tus gastos, categorías y presupuestos se importan automáticamente en su lugar.
+- **Sin entrar, los datos están solo en este navegador.** Si borras los datos del sitio o cambias de navegador, esa prueba no te sigue.
+- **Tus libros** entra con Google. La sesión se recuerda en este navegador. Los libros todavía no se guardan: al entrar verás tu nombre y que no se ha podido saber cuántos libros tienes. **Salir** vuelve a la prueba de este navegador. **Privacidad**, en la misma barra, explica qué se guardará.
+- **La primera vez** la prueba carga datos de demostración (seis meses de ejemplo) para que veas cómo funciona. Si ya usabas la versión anterior de la app, tus gastos, categorías y presupuestos se importan automáticamente en su lugar.
 - **Empezar de cero:** abre **Gestionar datos** (icono de base de datos, arriba a la derecha) y pulsa **Borrar todos los movimientos**. Se conservan categorías, presupuestos, objetivos, recibos y cuentas; bórralos o edítalos desde su sección si no los quieres.
 
 ## La barra superior
@@ -42,7 +43,7 @@ La vista general del mes seleccionado:
 
 ## Movimientos
 
-- Lista de los movimientos del mes, agrupados por día.
+- Lista de los movimientos del mes, agrupados por día. Se muestran de 30 en 30; **Cargar más** enseña el resto. Al cambiar el mes o un filtro se vuelve al principio.
 - Filtra por texto (nota o categoría), por tipo (gastos o ingresos) y por categoría. Arriba verás cuántos hay, las entradas, las salidas y el neto de lo filtrado.
 - **Exportar CSV** descarga `gastos-AAAA-MM.csv` con el total gastado por categoría en el mes y un total general. Incluye **todos** los gastos del mes, sin aplicar los filtros. El archivo usa `;` como separador y coma decimal, así que se abre bien en Excel en español.
 
@@ -99,10 +100,10 @@ Herramientas rápidas que no guardan nada:
 ## Preguntas frecuentes
 
 **¿Puedo usarla en el móvil y en el ordenador a la vez?**
-No. Cada navegador tiene sus propios datos.
+La prueba, no: cada navegador tiene la suya. Cuando los libros se guarden, la misma cuenta de Google verá los mismos libros en el teléfono y en el ordenador.
 
 **¿Cómo hago una copia de seguridad?**
-De momento no hay copia de seguridad completa. **Exportar CSV** da el resumen de gastos de un mes, no todos los datos.
+De la prueba, no hay copia completa. **Exportar CSV** da el resumen de gastos de un mes, no todos los datos. La descarga de un libro en JSON llegará con la cuenta.
 
 **He borrado algo por error.**
 Las eliminaciones no se pueden deshacer. Por eso todas piden una segunda confirmación.

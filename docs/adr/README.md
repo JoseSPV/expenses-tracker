@@ -47,9 +47,9 @@ Filter by domain when a task is scoped (e.g. only `auth` ADRs for login work).
 
 | ADR | Title | Status | Tags |
 |-----|-------|--------|------|
-| [0001](./0001-client-only-local-storage.md) | Client-only local-first persistence | accepted | persistence, architecture |
+| [0001](./0001-client-only-local-storage.md) | Client-only local-first persistence | accepted (trial) | persistence, architecture |
 | [0002](./0002-nextjs-app-router.md) | Next.js App Router as application shell | accepted | framework, architecture |
-| [0003](./0003-no-authentication.md) | No authentication for POC | accepted | auth |
+| [0003](./0003-no-authentication.md) | No authentication for POC | superseded by 0014 | auth |
 | [0004](./0004-fixed-expense-categories.md) | Fixed expense category taxonomy | superseded | domain |
 | [0005](./0005-expense-domain-model.md) | Expense entity shape | superseded | domain, persistence |
 | [0006](./0006-spanish-locale-and-eur.md) | Spanish locale and EUR currency | superseded | i18n, domain |
@@ -60,6 +60,7 @@ Filter by domain when a task is scoped (e.g. only `auth` ADRs for login work).
 | [0011](./0011-feature-modules-and-routes.md) | Feature modules, one route per section | accepted | architecture |
 | [0012](./0012-domain-model-v1.md) | Domain model v1 and legacy data migration | accepted | domain, persistence |
 | [0013](./0013-design-tokens-and-theming.md) | Design tokens, theming and UI primitives | accepted | ui |
+| [0014](./0014-google-sign-in.md) | Google sign-in, trial stays in the browser | accepted | auth |
 
 ## Adding a new ADR
 

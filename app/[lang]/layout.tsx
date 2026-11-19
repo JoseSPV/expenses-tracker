@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
+import { ThemeScript } from "@/components/layout/theme-script";
 import { readPerson } from "@/lib/session/person";
-import { themeInitScript } from "@/components/layout/theme";
 import { ToastProvider } from "@/components/ui/toast";
 import { hasLocale, locales } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -34,12 +34,10 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   const person = await readPerson();
 
   return (
-    // The theme script sets data-theme before hydration.
+    // The script runs in the first HTML document, before paint, so the stored theme does not flash.
     <html lang={lang} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+        <ThemeScript />
         <I18nProvider locale={lang} dict={dict}>
           <ToastProvider>
             <AppShell person={person}>{children}</AppShell>
