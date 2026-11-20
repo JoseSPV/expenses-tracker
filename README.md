@@ -19,6 +19,8 @@ Spanish UI, EUR currency. Without an account, the trial lives in the browser's `
 | Patrimonio | `/es/net-worth` | Assets, liabilities and monthly net-worth history |
 | Calculadoras | `/es/calculators` | Compound interest, loan payment, emergency fund |
 | Categorías | `/es/categories` | Create, rename, recolor and delete categories (with reassignment) |
+| Perfil | `/es/profile` | Sign in with Google, sign out, or delete the account |
+| Datos | `/es/data` | Load the full demo or clear the whole document |
 | Privacidad | `/es/privacy` | What an account stores, and how to take it or delete it |
 
 Light and dark themes, responsive layout (bottom navigation on mobile).

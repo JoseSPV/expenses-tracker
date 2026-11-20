@@ -20,7 +20,7 @@ The same person wants their books on the phone and the computer, without running
 
 Signing in is Google, through Supabase. The trial without an account stays in this browser.
 
-- «Tus libros» starts Google. The return route is `/auth/callback`. It exchanges the code for a session and does not forward the code.
+- «Tus libros», on Perfil, starts Google. The return route is `/auth/callback`. It exchanges the code for a session and does not forward the code.
 - The session is an HttpOnly cookie. `proxy.ts` refreshes it. The server reads `getClaims()`, not `getSession()`.
 - The browser receives only the project URL and the publishable key (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`). The URL must be `https://…supabase.co`. A service-role key is refused.
 - `features/` does not import the Supabase client. The shell starts sign-in. The server reads who is signed in.

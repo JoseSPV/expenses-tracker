@@ -2,28 +2,46 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Database, Plus, SunMoon } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, Plus, SunMoon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransactionFormDialog } from "@/features/transactions/transaction-form-dialog";
 import { useI18n } from "@/i18n/i18n-provider";
-import { signInProblem } from "@/lib/session/google-sign-in";
 import { homeScreen } from "@/lib/session/home-screen";
 import { shellTitle } from "@/lib/session/shell-content";
 import type { Person } from "@/lib/session/placeholders";
 import { bindAccount } from "@/lib/store/app-store";
-import { createBrowserSupabase } from "@/lib/supabase/browser";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { cn } from "@/lib/utils";
-import { DataDialog } from "./data-dialog";
 import { MonthProvider, useMonth } from "./month-context";
-import { NAV_ITEMS, activeNavItem, hrefFor } from "./navigation";
-import { SignedInBar } from "./session-chrome";
+import { ACCOUNT_ITEMS, NAV_ITEMS, activeNavItem, hrefFor, type NavItem } from "./navigation";
+import { PersonProvider } from "./person-context";
 import { toggleTheme } from "./theme";
+
+function NavLinks({ items, activeSegment }: { items: NavItem[]; activeSegment?: string }) {
+  const { locale, dict } = useI18n();
+
+  return items.map(({ segment, labelKey, icon: Icon }) => {
+    const active = segment === activeSegment;
+    return (
+      <Link
+        key={labelKey}
+        href={hrefFor(locale, segment)}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "flex min-h-11 min-w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] px-2.5 py-1.5 text-[11px] leading-none font-medium text-muted hover:bg-surface-2 hover:text-fg md:min-h-0 md:w-full md:min-w-0 md:shrink md:flex-row md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-[15px] md:leading-normal",
+          active && "bg-primary/13 text-primary hover:bg-primary/13 hover:text-primary",
+        )}
+      >
+        <Icon size={20} strokeWidth={1.8} aria-hidden />
+        <span>{dict.nav[labelKey]}</span>
+      </Link>
+    );
+  });
+}
 
 function Sidebar({ activeSegment }: { activeSegment?: string }) {
   const { locale, dict } = useI18n();
-  const navRef = useRef<HTMLElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const nav = navRef.current;
@@ -43,29 +61,19 @@ function Sidebar({ activeSegment }: { activeSegment?: string }) {
         <span className="grid size-8 place-items-center rounded-[10px] bg-primary font-extrabold text-primary-fg">J</span>
         {dict.meta.appName}
       </Link>
-      <nav
+      <div
         ref={navRef}
-        aria-label={dict.nav.label}
-        className="flex gap-1 overflow-x-auto [scrollbar-width:none] md:flex-col md:overflow-visible md:gap-1 [&::-webkit-scrollbar]:hidden"
+        className="flex gap-1 overflow-x-auto [scrollbar-width:none] md:min-h-0 md:flex-1 md:flex-col md:overflow-visible md:[&::-webkit-scrollbar]:hidden [&::-webkit-scrollbar]:hidden"
       >
-        {NAV_ITEMS.map(({ segment, labelKey, icon: Icon }) => {
-          const active = segment === activeSegment;
-          return (
-            <Link
-              key={labelKey}
-              href={hrefFor(locale, segment)}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex min-h-11 min-w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-[10px] px-2.5 py-1.5 text-[11px] leading-none font-medium text-muted hover:bg-surface-2 hover:text-fg md:min-h-0 md:w-full md:min-w-0 md:shrink md:flex-row md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-[15px] md:leading-normal",
-                active && "bg-primary/13 text-primary hover:bg-primary/13 hover:text-primary",
-              )}
-            >
-              <Icon size={20} strokeWidth={1.8} aria-hidden />
-              <span>{dict.nav[labelKey]}</span>
-            </Link>
-          );
-        })}
-      </nav>
+        <nav aria-label={dict.nav.label} className="flex gap-1 md:flex-col md:gap-1">
+          <NavLinks items={NAV_ITEMS} activeSegment={activeSegment} />
+        </nav>
+        <span aria-hidden className="mx-1 w-px shrink-0 self-stretch bg-border md:mx-0 md:my-3 md:h-px md:w-full" />
+        <nav aria-label={dict.nav.account} className="flex gap-1 md:mt-auto md:flex-col md:gap-1">
+          <p className="hidden px-3 text-xs font-medium text-muted md:block">{dict.nav.account}</p>
+          <NavLinks items={ACCOUNT_ITEMS} activeSegment={activeSegment} />
+        </nav>
+      </div>
     </aside>
   );
 }
@@ -87,62 +95,6 @@ function MonthPicker() {
   );
 }
 
-function subscribeToNothing() {
-  return () => {};
-}
-
-function googleReturnFailed(): boolean {
-  return new URLSearchParams(window.location.search).get("auth") === "error";
-}
-
-function SignedOutBar() {
-  const { dict, locale } = useI18n();
-  const text = dict.shell;
-  const returnedWithError = useSyncExternalStore(subscribeToNothing, googleReturnFailed, () => false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
-  const shown = message ?? (returnedWithError ? text.signInFailed : null);
-
-  const openBooks = async () => {
-    const problem = signInProblem({ online: navigator.onLine, configured: isSupabaseConfigured() });
-    if (problem === "offline") {
-      setMessage(text.signInOffline);
-      return;
-    }
-    if (problem) {
-      setMessage(text.signInUnavailable);
-      return;
-    }
-    setMessage(null);
-    setPending(true);
-    const { error } = await createBrowserSupabase().auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) {
-      setPending(false);
-      setMessage(text.signInFailed);
-    }
-  };
-
-  return (
-    <div className="flex w-full basis-full flex-wrap items-center gap-x-3 gap-y-1">
-      <p className="text-sm font-medium">{text.signedOut}</p>
-      <Button variant="primary" className="min-h-11" onClick={openBooks} disabled={pending} aria-busy={pending}>
-        {text.yourBooks}
-      </Button>
-      <Link href={hrefFor(locale, "privacy")} className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline">
-        {text.privacy}
-      </Link>
-      {shown ? (
-        <p role="status" className="w-full text-sm text-danger">
-          {shown}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 export function AppShell({ children, person }: { children: ReactNode; person: Person | null }) {
   const { locale, dict } = useI18n();
   const pathname = usePathname();
@@ -158,8 +110,8 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
   });
   const headingRef = useRef<HTMLHeadingElement>(null);
   const skipFocus = useRef(true);
-  const [openDialog, setOpenDialog] = useState<"transaction" | "data" | null>(null);
-  const closeDialog = () => setOpenDialog(null);
+  const [transactionOpen, setTransactionOpen] = useState(false);
+  const closeTransaction = () => setTransactionOpen(false);
 
   useEffect(() => {
     if (skipFocus.current) {
@@ -170,36 +122,33 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
   }, [pathname]);
 
   return (
-    <MonthProvider>
-      <div className="grid min-h-screen md:grid-cols-[232px_minmax(0,1fr)]">
-        <Sidebar activeSegment={active?.segment} />
-        <div className="min-w-0">
-          <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b bg-bg/85 px-4 py-3 backdrop-blur-md md:px-8">
-            {person ? <SignedInBar person={person} /> : <SignedOutBar />}
-            <h1 ref={headingRef} tabIndex={-1} className="min-w-0 flex-1 truncate text-xl font-bold sm:text-[22px]">
-              {title}
-            </h1>
-            {active?.usesMonth ? <MonthPicker /> : null}
-            <div className="flex gap-1.5">
-              <Button variant="ghost" size="icon" onClick={() => setOpenDialog("data")} title={dict.shell.manageData} aria-label={dict.shell.manageData}>
-                <Database size={18} />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={toggleTheme} title={dict.shell.toggleTheme} aria-label={dict.shell.toggleTheme}>
-                <SunMoon size={18} />
-              </Button>
-              <Button variant="primary" onClick={() => setOpenDialog("transaction")} aria-label={dict.shell.addTransaction}>
-                <Plus size={16} aria-hidden />
-                <span className="max-sm:hidden">{dict.shell.addTransaction}</span>
-              </Button>
-            </div>
-          </header>
-          <main className="max-w-7xl px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:pb-12">
-            {children}
-          </main>
+    <PersonProvider person={person}>
+      <MonthProvider>
+        <div className="grid min-h-screen md:grid-cols-[232px_minmax(0,1fr)]">
+          <Sidebar activeSegment={active?.segment} />
+          <div className="min-w-0">
+            <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b bg-bg/85 px-4 py-3 backdrop-blur-md md:px-8">
+              <h1 ref={headingRef} tabIndex={-1} className="min-w-0 flex-1 truncate text-xl font-bold sm:text-[22px]">
+                {title}
+              </h1>
+              {active?.usesMonth ? <MonthPicker /> : null}
+              <div className="flex gap-1.5">
+                <Button variant="ghost" size="icon" onClick={toggleTheme} title={dict.shell.toggleTheme} aria-label={dict.shell.toggleTheme}>
+                  <SunMoon size={18} />
+                </Button>
+                <Button variant="primary" onClick={() => setTransactionOpen(true)} aria-label={dict.shell.addTransaction}>
+                  <Plus size={16} aria-hidden />
+                  <span className="max-sm:hidden">{dict.shell.addTransaction}</span>
+                </Button>
+              </div>
+            </header>
+            <main className="max-w-7xl px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:pb-12">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-      <TransactionFormDialog open={openDialog === "transaction"} onClose={closeDialog} />
-      <DataDialog open={openDialog === "data"} onClose={closeDialog} />
-    </MonthProvider>
+        <TransactionFormDialog open={transactionOpen} onClose={closeTransaction} />
+      </MonthProvider>
+    </PersonProvider>
   );
 }

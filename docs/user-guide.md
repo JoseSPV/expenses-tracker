@@ -5,20 +5,26 @@ Joenance te ayuda a registrar tus gastos e ingresos del día a día, controlar p
 ## Antes de empezar
 
 - **Sin entrar, los datos están solo en este navegador.** Si borras los datos del sitio o cambias de navegador, esa prueba no te sigue.
-- **Tus libros** entra con Google. Dentro ves las mismas secciones, vacías: no aparece la prueba ni sus datos de ejemplo. Lo que anotes con la sesión se queda en este navegador, aparte de la prueba, hasta que la cuenta lo guarde. **Salir** vuelve a la prueba. **Privacidad**, en la misma barra, explica qué se guardará.
+- **Perfil**, al final del menú en el grupo Cuenta, entra con Google. Dentro ves las mismas secciones, vacías: no aparece la prueba ni sus datos de ejemplo. Lo que anotes con la sesión se queda en este navegador, aparte de la prueba, hasta que la cuenta lo guarde. **Salir** vuelve a la prueba. **Privacidad**, en esa misma página, explica qué se guardará.
 - **La primera vez** la prueba carga datos de demostración (seis meses de ejemplo) para que veas cómo funciona. Si ya usabas la versión anterior de la app, tus gastos, categorías y presupuestos se importan automáticamente en su lugar.
-- **Empezar de cero:** abre **Gestionar datos** (icono de base de datos, arriba a la derecha) y pulsa **Borrar todos los datos**. Se vacían movimientos, categorías, presupuestos, objetivos, recibos y cuentas. **Cargar datos de demostración** vuelve a poner el ejemplo completo.
+- **Empezar de cero:** abre **Datos**, en el grupo Cuenta, y pulsa **Borrar todos los datos**. Se vacían movimientos, categorías, presupuestos, objetivos, recibos y cuentas. **Cargar datos de demostración** vuelve a poner el ejemplo completo.
 
 ## La barra superior
 
 | Elemento | Para qué sirve |
 | --- | --- |
 | Selector de mes (‹ Noviembre de 2026 ›) | Cambia el mes que ves en **Resumen**, **Movimientos** y **Presupuestos**. No permite ir a meses futuros. |
-| Gestionar datos | Cargar datos de demostración (sustituye todo) o borrar todos los movimientos. Ambas acciones piden confirmación. |
 | Cambiar tema | Alterna entre modo claro y oscuro. La elección se recuerda. |
 | Añadir movimiento | Registra un gasto o un ingreso desde cualquier sección. |
 
 En el móvil, el menú de secciones está abajo y el botón **+** sustituye a **Añadir movimiento**.
+
+## Cuenta
+
+Al final del menú, separado de las secciones de dinero:
+
+- **Perfil:** si no has entrado, **Tus libros** abre Google. Si has entrado, ves tu nombre y el correo, y desde ahí sales o borras la cuenta. **Privacidad** está en esa página.
+- **Datos:** cargar el ejemplo completo o borrar todos los datos. Las dos acciones piden confirmación.
 
 ## Registrar un movimiento
 

@@ -5,6 +5,7 @@
   },
   "nav": {
     "label": "Principal",
+    "account": "Cuenta",
     "dashboard": "Resumen",
     "transactions": "Movimientos",
     "budgets": "Presupuestos",
@@ -12,13 +13,14 @@
     "bills": "Recibos",
     "netWorth": "Patrimonio",
     "calculators": "Calculadoras",
-    "categories": "Categorías"
+    "categories": "Categorías",
+    "profile": "Perfil",
+    "data": "Datos"
   },
   "shell": {
     "previousMonth": "Mes anterior",
     "nextMonth": "Mes siguiente",
     "toggleTheme": "Cambiar tema",
-    "manageData": "Gestionar datos",
     "addTransaction": "Añadir movimiento",
     "signedOut": "No has entrado",
     "yourBooks": "Tus libros",

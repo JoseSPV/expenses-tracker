@@ -243,7 +243,7 @@ Normalización: la base guarda filas. El cliente no reconstruye un `AppData` del
 
 Esto no es un dictamen. Es lo que la app tiene que hacer para que una familia en España pueda ver, llevarse y borrar sus datos. El proyecto de Supabase se crea en la UE.
 
-- **Aviso.** Una página en español, enlazada desde la cabecera sin sesión y desde la sesión. Dice qué se guarda, que Google identifica la cuenta, que los datos están en Supabase en la UE, que quien está en un libro ve ese libro, cómo exportar y cómo borrar la cuenta. La cookie de sesión se menciona ahí. No hay banner de consentimiento.
+- **Aviso.** Una página en español, enlazada desde Perfil. Dice qué se guarda, que Google identifica la cuenta, que los datos están en Supabase en la UE, que quien está en un libro ve ese libro, cómo exportar y cómo borrar la cuenta. La cookie de sesión se menciona ahí. No hay banner de consentimiento.
 - **Exportar.** Desde la sesión, por cada libro que puedes abrir, una descarga con las filas de ese libro en JSON. El CSV mensual de gastos sigue siendo el resumen de siempre, no el sustituto de esta copia.
 - **Borrar.** La cuenta se borra con la confirmación ya prevista. Desaparece el perfil, los libros que creaste y tu acceso. Lo que escribiste en un libro de otra persona permanece, sin tu nombre.
 - **Invitaciones.** El email de alguien que todavía no ha aceptado solo vive mientras la invitación está pendiente, como máximo 7 días.
@@ -253,7 +253,7 @@ Esto no es un dictamen. Es lo que la app tiene que hacer para que una familia en
 
 Ninguna vista de la nube se queda en blanco. Cada una tiene carga, error, vacío y dato, y el shell dice siempre si hay sesión.
 
-**Sin sesión.** En la cabecera, visible en móvil y en escritorio, se lee que no has entrado. Al lado hay un botón, «Tus libros», que empieza el acceso con Google. Las ocho secciones siguen enseñando la prueba de ese navegador.
+**Sin sesión.** Perfil, en el grupo Cuenta del menú, dice que no has entrado. Ahí está «Tus libros», que empieza el acceso con Google. Las ocho secciones siguen enseñando la prueba de ese navegador. La cabecera no lleva la sesión ni la gestión de datos.
 
 **Con sesión.** Las ocho secciones se abren igual, vacías. No se enseña la prueba ni un error por no tener libros. Lo anotado con la sesión no se copia desde la prueba ni se mezcla con ella. Hasta que la cuenta lo guarde, ese documento vive en este navegador, en otra clave.
 
@@ -263,7 +263,7 @@ La prueba local conserva, además, el esqueleto hasta hidratar y el aviso de «n
 
 | Recorrido | Cargando | Éxito | Error | Vacío | Atrasado | Sin red | Sin permiso | Esperando guardado |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Prueba, sin sesión | Esqueleto hasta hidratar | Las secciones de hoy, con el aviso y el botón «Tus libros» | El botón de acceso se puede reintentar | La prueba vacía, con su texto | — | La prueba sigue; el acceso dice que hace falta red | Si se cancela Google, se sigue en la prueba | El botón espera la vuelta de Google |
+| Prueba, sin sesión | Esqueleto hasta hidratar | Las secciones de hoy. Perfil tiene el aviso y «Tus libros» | El botón de acceso se puede reintentar | La prueba vacía, con su texto | — | La prueba sigue; el acceso dice que hace falta red | Si se cancela Google, se sigue en la prueba | El botón espera la vuelta de Google |
 | Entrar con Google | Botón en espera | Las ocho secciones, vacías, sin la prueba | Se puede reintentar el acceso | Sin movimientos ni categorías: el vacío de cada sección | — | El acceso no arranca y lo dice | Cuenta de Google cancelada: se vuelve a la prueba | El botón no se confirma antes de la vuelta |
 | Cada sección con libro | Esqueleto de esa vista | La primera página o el agregado | Error con reintento; las otras secciones no se bloquean | El texto de vacío de esa lista, y un botón de cargar más solo si hay cursor | Página ya vista más aviso de que no se pudo refrescar | Igual que el error de red | Libro ajeno o sesión caducada: fuera de ese libro | El diálogo espera; no pinta el dato nuevo |
 | Sin libros | — | Las secciones siguen abiertas y vacías | No es un error y no hay reintento | El vacío de cada sección | — | No se inventan datos | — | — |
