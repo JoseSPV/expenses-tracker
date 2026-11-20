@@ -2,6 +2,24 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+.tour-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.tour-layer::backdrop {
+  background: transparent;
+}
+
 :root {
   --bg: #f5f6fa;
   --surface: #ffffff;

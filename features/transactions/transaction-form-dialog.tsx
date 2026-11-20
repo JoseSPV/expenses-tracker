@@ -92,12 +92,16 @@ function TransactionForm({ data, transaction, onClose }: { data: AppData; transa
       onDelete={remove}
       submitDisabled={!categoryId || parsed === null || parsed <= 0}
     >
-      <Field label={dict.common.amount}>
-        <Input type="number" inputMode="decimal" step="0.01" min="0.01" required data-autofocus value={amount} onChange={(e) => setAmount(e.target.value)} />
-      </Field>
-      <Field label={dict.common.category}>
-        <CategorySelect data={data} value={categoryId} onChange={setCategoryId} required />
-      </Field>
+      <div data-tour="movement-amount">
+        <Field label={dict.common.amount}>
+          <Input type="number" inputMode="decimal" step="0.01" min="0.01" required data-autofocus value={amount} onChange={(e) => setAmount(e.target.value)} />
+        </Field>
+      </div>
+      <div data-tour="movement-category">
+        <Field label={dict.common.category}>
+          <CategorySelect data={data} value={categoryId} onChange={setCategoryId} required />
+        </Field>
+      </div>
       {data.categories.length === 0 ? (
         <p className="-mt-2 text-[13px] text-muted">
           {text.needCategory}{" "}
@@ -107,9 +111,11 @@ function TransactionForm({ data, transaction, onClose }: { data: AppData; transa
         </p>
       ) : null}
       <BudgetHint data={data} categoryId={categoryId} date={date} pending={pending} />
-      <Field label={text.date}>
-        <Input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
-      </Field>
+      <div data-tour="movement-date">
+        <Field label={text.date}>
+          <Input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
+        </Field>
+      </div>
       <Field label={text.note}>
         <Input placeholder={text.notePlaceholder} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>

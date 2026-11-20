@@ -100,11 +100,11 @@ export function BudgetsView() {
         <DailyAllowance month={month} remaining={remaining} />
       </KpiGrid>
 
-      <Card>
+      <Card data-tour="budget-list">
         <CardHeader
           title={text.title}
           action={
-            <Button size="sm" variant="primary" disabled={!canAdd} onClick={() => setEditing("new")}>
+            <Button data-tour="budget-add" size="sm" variant="primary" disabled={!canAdd} onClick={() => setEditing("new")}>
               <Plus size={14} aria-hidden />
               {text.add}
             </Button>

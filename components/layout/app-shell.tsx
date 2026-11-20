@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Plus, SunMoon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransactionFormDialog } from "@/features/transactions/transaction-form-dialog";
+import { HelpTour } from "@/features/tour/help-tour";
 import { useI18n } from "@/i18n/i18n-provider";
 import { homeScreen } from "@/lib/session/home-screen";
 import { shellTitle } from "@/lib/session/shell-content";
@@ -83,7 +84,7 @@ function MonthPicker() {
   const { month, canGoForward, shift } = useMonth();
 
   return (
-    <div className="order-3 flex w-full items-center justify-between gap-0.5 rounded-full border bg-surface p-0.5 sm:order-none sm:w-auto">
+    <div data-tour="month" className="order-3 flex w-full items-center justify-between gap-0.5 rounded-full border bg-surface p-0.5 sm:order-none sm:w-auto">
       <Button variant="ghost" size="icon" className="rounded-full" onClick={() => shift(-1)} aria-label={dict.shell.previousMonth}>
         <ChevronLeft size={18} />
       </Button>
@@ -111,6 +112,7 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
   const headingRef = useRef<HTMLHeadingElement>(null);
   const skipFocus = useRef(true);
   const [transactionOpen, setTransactionOpen] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
   const closeTransaction = () => setTransactionOpen(false);
 
   useEffect(() => {
@@ -118,8 +120,9 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
       skipFocus.current = false;
       return;
     }
+    if (tourActive) return;
     headingRef.current?.focus();
-  }, [pathname]);
+  }, [pathname, tourActive]);
 
   return (
     <PersonProvider person={person}>
@@ -136,7 +139,8 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
                 <Button variant="ghost" size="icon" onClick={toggleTheme} title={dict.shell.toggleTheme} aria-label={dict.shell.toggleTheme}>
                   <SunMoon size={18} />
                 </Button>
-                <Button variant="primary" onClick={() => setTransactionOpen(true)} aria-label={dict.shell.addTransaction}>
+                <HelpTour pathname={pathname} onForm={setTransactionOpen} onActive={setTourActive} />
+                <Button variant="primary" data-tour="add-transaction" onClick={() => setTransactionOpen(true)} aria-label={dict.shell.addTransaction}>
                   <Plus size={16} aria-hidden />
                   <span className="max-sm:hidden">{dict.shell.addTransaction}</span>
                 </Button>

@@ -55,7 +55,7 @@ export function BillsView() {
         <Kpi label={text.dueSoon} value={format.money(sum(dueSoon, (r) => r.amount))} hint={format.plural(text.dueSoonHint, dueSoon.length)} />
       </KpiGrid>
 
-      <Card>
+      <Card data-tour="bill-list">
         <CardHeader
           title={text.items}
           action={
@@ -97,7 +97,7 @@ export function BillsView() {
                       <DueBadge date={item.nextDate} />
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" onClick={() => logPayment(item)}>
+                      <Button size="sm" data-tour={items.indexOf(item) === 0 ? "bill-paid" : undefined} onClick={() => logPayment(item)}>
                         {income ? text.markReceived : text.markPaid}
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setEditing({ item })}>
@@ -147,7 +147,7 @@ export function BillsView() {
                       </td>
                       <td>
                         <div className="flex justify-end gap-1">
-                          <Button size="sm" onClick={() => logPayment(item)}>
+                          <Button size="sm" data-tour={items.indexOf(item) === 0 ? "bill-paid" : undefined} onClick={() => logPayment(item)}>
                             {income ? text.markReceived : text.markPaid}
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditing({ item })}>

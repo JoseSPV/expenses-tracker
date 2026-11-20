@@ -15,6 +15,7 @@ Joenance te ayuda a registrar tus gastos e ingresos del día a día, controlar p
 | --- | --- |
 | Selector de mes (‹ Noviembre de 2026 ›) | Cambia el mes que ves en **Resumen**, **Movimientos** y **Presupuestos**. No permite ir a meses futuros. |
 | Cambiar tema | Alterna entre modo claro y oscuro. La elección se recuerda. |
+| Ayuda | Al lado del tema. Abre un recorrido por el resumen, un movimiento, los presupuestos, las categorías y los recibos. No empieza solo y no guarda nada. |
 | Añadir movimiento | Registra un gasto o un ingreso desde cualquier sección. |
 
 En el móvil, el menú de secciones está abajo y el botón **+** sustituye a **Añadir movimiento**.

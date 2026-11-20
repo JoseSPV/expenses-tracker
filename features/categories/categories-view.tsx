@@ -72,7 +72,7 @@ export function CategoriesView() {
   if (!data) return <ViewSkeleton />;
 
   const section = (type: CategoryType, title: string) => (
-    <Card>
+    <Card data-tour={type === "expense" ? "category-expense" : "category-income"}>
       <CardHeader
         title={title}
         action={

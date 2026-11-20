@@ -160,14 +160,16 @@ export function DashboardView() {
 
   return (
     <section className="flex animate-fade-in flex-col gap-5">
+      <div data-tour="summary-totals">
       <KpiGrid>
         <Kpi label={text.income} value={format.money(summary.income)} tone="positive" />
         <Kpi label={text.expenses} value={format.money(summary.expense)} />
         <Kpi label={text.net} value={format.money(summary.net)} tone={summary.net >= 0 ? "positive" : "negative"} />
         <Kpi label={text.savingsRate} value={summary.income > 0 ? format.percent(summary.savingsRate) : "—"} hint={text.savingsRateHint} />
       </KpiGrid>
+      </div>
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card>
+        <Card data-tour="summary-spending">
           <CardHeader title={text.whereMoneyGoes} action={<SeeAll segment="transactions" />} />
           <Spending data={data} month={month} total={summary.expense} />
         </Card>
@@ -176,7 +178,7 @@ export function DashboardView() {
           <Trend data={data} month={month} />
         </Card>
       </div>
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div data-tour="summary-rest" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardHeader title={text.budgets} action={<SeeAll segment="budgets" />} />
           <BudgetSummary data={data} month={month} />
