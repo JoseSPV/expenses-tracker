@@ -18,8 +18,10 @@ function subscribeToNothing() {
   return () => {};
 }
 
-function googleReturnFailed(): boolean {
-  return new URLSearchParams(window.location.search).get("auth") === "error";
+function googleReturn(): "error" | "denied" | null {
+  const value = new URLSearchParams(window.location.search).get("auth");
+  if (value === "error" || value === "denied") return value;
+  return null;
 }
 
 function ConfirmDialog({
@@ -68,12 +70,13 @@ export function ProfileView() {
   const person = usePerson();
   const { dict, locale } = useI18n();
   const text = dict.shell;
-  const returnedWithError = useSyncExternalStore(subscribeToNothing, googleReturnFailed, () => false);
+  const returned = useSyncExternalStore(subscribeToNothing, googleReturn, () => null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [dialog, setDialog] = useState<"out" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const shown = message ?? (returnedWithError ? text.signInFailed : null);
+  const returnedMessage = returned === "denied" ? text.signInDenied : returned === "error" ? text.signInFailed : null;
+  const shown = message ?? returnedMessage;
 
   const openBooks = async () => {
     const problem = signInProblem({ online: navigator.onLine, configured: isSupabaseConfigured() });

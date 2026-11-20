@@ -1,4 +1,5 @@
 import type { Person } from "@/lib/session/placeholders";
+import { isAllowedEmail } from "@/lib/session/allowlist";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { supabaseEnv } from "@/lib/supabase/env";
 
@@ -17,6 +18,7 @@ export async function readPerson(): Promise<Person | null> {
     const meta = claims.user_metadata;
     const record = meta && typeof meta === "object" ? (meta as Record<string, unknown>) : {};
     const email = text(claims.email) ?? "";
+    if (!isAllowedEmail(email, process.env.ALLOWED_GOOGLE_EMAILS)) return null;
     const name = text(record.full_name) ?? text(record.name) ?? email;
     if (!name) return null;
     return { name, email };

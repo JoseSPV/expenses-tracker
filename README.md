@@ -41,9 +41,10 @@ Google sign-in needs two public values in `.env.local` (this file is gitignored)
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
+ALLOWED_GOOGLE_EMAILS=one@gmail.com,two@gmail.com
 ```
 
-The URL must be the hosted project (`https://…supabase.co`). Do not put the service-role key in this file or anywhere in the app. Without the two values, the trial still runs and «Tus libros» says Google is not connected.
+The URL must be the hosted project (`https://…supabase.co`). Do not put the service-role key in this file or anywhere in the app. `ALLOWED_GOOGLE_EMAILS` is read only on the server. Do not prefix it with `NEXT_PUBLIC_` and do not commit the real addresses. An empty list lets nobody sign in. Without the two public values, the trial still runs and «Tus libros» says Google is not connected. The same private variable must be set in the Vercel project before the published site will accept a sign-in.
 
 | Script | Purpose |
 | --- | --- |

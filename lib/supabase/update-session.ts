@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAllowedEmail } from "@/lib/session/allowlist";
 import { supabaseEnv } from "./env";
 
 /** Refreshes the session cookie before the page renders. Returns the response that carries the new cookie. */
@@ -23,6 +24,8 @@ export async function updateSession(request: NextRequest) {
   });
 
   // Verifies the token. A forged cookie does not count as a session.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+  const email = data?.claims && typeof data.claims.email === "string" ? data.claims.email : "";
+  if (email && !isAllowedEmail(email, process.env.ALLOWED_GOOGLE_EMAILS)) await supabase.auth.signOut();
   return response;
 }
