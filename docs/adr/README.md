@@ -61,6 +61,7 @@ Filter by domain when a task is scoped (e.g. only `auth` ADRs for login work).
 | [0012](./0012-domain-model-v1.md) | Domain model v1 and legacy data migration | accepted | domain, persistence |
 | [0013](./0013-design-tokens-and-theming.md) | Design tokens, theming and UI primitives | accepted | ui |
 | [0014](./0014-google-sign-in.md) | Google sign-in, trial stays in the browser | accepted | auth |
+| [0015](./0015-investment-portfolio.md) | Investment portfolio per book | accepted | domain, persistence |
 
 ## Adding a new ADR
 
