@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/toast";
 import { useI18n } from "@/i18n/i18n-provider";
 import { nextPaletteColor } from "@/lib/domain/palette";
 import { categoryUsage } from "@/lib/domain/selectors";
+import { isNameTaken } from "@/lib/domain/text";
 import type { AppData, Category, CategoryType } from "@/lib/domain/types";
 import { deleteCategory, saveCategory } from "@/lib/store/actions";
 import { useAppData } from "@/lib/store/use-app-data";
@@ -60,8 +61,7 @@ function CategoryForm({
 
   const usage = category ? categoryUsage(data, category.id) : null;
   const typeLocked = Boolean(usage && usage.transactions + usage.recurring > 0);
-  const key = name.trim().toLocaleLowerCase("es");
-  const duplicate = data.categories.some((c) => c.id !== category?.id && c.name.trim().toLocaleLowerCase("es") === key);
+  const duplicate = isNameTaken(data.categories, name, category?.id);
 
   const submit = () => {
     if (!saveCategory({ name: name.trim(), color, type }, category?.id)) {
@@ -78,7 +78,7 @@ function CategoryForm({
       submitLabel={category ? dict.common.saveChanges : dict.common.save}
       onSubmit={submit}
       onCancel={onClose}
-      submitDisabled={!key || duplicate}
+      submitDisabled={!name.trim() || duplicate}
     >
       <Field label={dict.common.name}>
         <Input required data-autofocus placeholder={text.namePlaceholder} value={name} onChange={(e) => setName(e.target.value)} aria-invalid={duplicate} />

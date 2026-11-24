@@ -3,6 +3,7 @@ import { roundMoney } from "@/lib/domain/money";
 import { nextPaletteColor } from "@/lib/domain/palette";
 import { hasOversold } from "@/lib/domain/portfolio";
 import { categoryUsage, netWorthTotals, portfolioValue } from "@/lib/domain/selectors";
+import { isNameTaken, tickerKey } from "@/lib/domain/text";
 import type {
   Account,
   AppData,
@@ -46,8 +47,6 @@ function hasCategory(data: AppData, id: string, type?: CategoryType): boolean {
   return data.categories.some((category) => category.id === id && (type === undefined || category.type === type));
 }
 
-const nameKey = (name: string) => name.trim().toLocaleLowerCase("es");
-
 // Transactions
 
 export type TransactionInput = Omit<Transaction, "id">;
@@ -81,8 +80,7 @@ export type CategoryInput = Omit<Category, "id">;
 export const saveCategory = (input: CategoryInput, id?: string): boolean =>
   updateData((d) => {
     const name = input.name.trim();
-    const key = nameKey(name);
-    if (!key || d.categories.some((category) => category.id !== id && nameKey(category.name) === key)) return false;
+    if (!name || isNameTaken(d.categories, name, id)) return false;
     const existing = id ? d.categories.find((category) => category.id === id) : undefined;
     const usage = existing ? categoryUsage(d, existing.id) : null;
     // Changing type would silently flip its transactions between income and expense.
@@ -249,11 +247,11 @@ function investmentWrite(recipe: (d: AppData) => InvestmentSaveResult): Investme
 
 export const saveInstrument = (input: InstrumentInput, id?: string, expectedVersion = 1): InvestmentSaveResult =>
   investmentWrite((d) => {
-    const ticker = input.ticker.trim().toLocaleUpperCase("es");
+    const ticker = tickerKey(input.ticker);
     const name = input.name.trim();
     const currency = input.currency.trim().toUpperCase();
     if (!ticker || !name || !/^[A-Z]{3}$/.test(currency)) return "invalid";
-    if (d.instruments.some((instrument) => instrument.id !== id && instrument.ticker.toLocaleUpperCase("es") === ticker)) return "duplicate";
+    if (d.instruments.some((instrument) => instrument.id !== id && tickerKey(instrument.ticker) === ticker)) return "duplicate";
     if (!id) {
       const color = nextPaletteColor(d.instruments.map((instrument) => instrument.color));
       d.instruments.push({ id: newId(), ticker, name, currency, color, version: 1 });

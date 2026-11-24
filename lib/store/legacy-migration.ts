@@ -1,5 +1,6 @@
 import { canonicalizeDate } from "@/lib/domain/dates";
 import { PALETTE } from "@/lib/domain/palette";
+import { nameKey } from "@/lib/domain/text";
 import type { AppData, Budgets, Category, Transaction } from "@/lib/domain/types";
 import type { SeedText } from "@/i18n/types";
 import { INCOME_CATEGORY_IDS, seedCategories } from "./seed";
@@ -56,7 +57,7 @@ export function migrateLegacyData(storage: Storage, seed: SeedText): AppData {
 
   const byName = new Map<string, Category>();
   const ensureCategory = (name: string): Category => {
-    const key = name.toLocaleLowerCase("es");
+    const key = nameKey(name);
     let category = byName.get(key);
     if (!category) {
       category = { id: crypto.randomUUID(), name, color: PALETTE[byName.size % PALETTE.length], type: "expense" };
