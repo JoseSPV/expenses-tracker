@@ -6,6 +6,12 @@ export const roundMoney = (value: number): number => Math.round(value * 100) / 1
  * A dot is the decimal separator only when there is no comma (`12.5`).
  */
 export function parseMoney(raw: string, options?: { allowNegative?: boolean }): number | null {
+  const value = parseDecimal(raw, options);
+  return value === null ? null : roundMoney(value);
+}
+
+/** Same rules as `parseMoney`, unrounded: share counts and exchange rates need more than two decimals. */
+export function parseDecimal(raw: string, options?: { allowNegative?: boolean }): number | null {
   const trimmed = raw.trim().replace(/\s/g, "");
   if (!trimmed) return null;
   const negative = trimmed.startsWith("-");
@@ -14,5 +20,5 @@ export function parseMoney(raw: string, options?: { allowNegative?: boolean }): 
   const normalized = body.includes(",") ? body.replace(/\./g, "").replace(",", ".") : body;
   if (!/^\d+(\.\d+)?$/.test(normalized)) return null;
   const value = (negative ? -1 : 1) * Number(normalized);
-  return Number.isFinite(value) ? roundMoney(value) : null;
+  return Number.isFinite(value) ? value : null;
 }

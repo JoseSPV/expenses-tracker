@@ -1,6 +1,19 @@
 import { addDays, addMonths, currentMonth, dateInMonth, dayOfMonth, daysInMonth, nextOccurrence, today } from "@/lib/domain/dates";
-import { netWorthTotals } from "@/lib/domain/selectors";
-import type { Account, AppData, Category, RecurringItem, Transaction } from "@/lib/domain/types";
+import { PALETTE } from "@/lib/domain/palette";
+import { proposeDividendEur, proposeTradeEur } from "@/lib/domain/portfolio";
+import { netWorthTotals, portfolioValue } from "@/lib/domain/selectors";
+import type {
+  Account,
+  AppData,
+  Category,
+  DividendOperation,
+  Fee,
+  Instrument,
+  InvestmentTransaction,
+  RecurringItem,
+  TradeOperation,
+  Transaction,
+} from "@/lib/domain/types";
 import type { SeedText } from "@/i18n/types";
 
 type SeedCategoryId = keyof SeedText["categories"];
@@ -117,17 +130,61 @@ function createRecurring(text: SeedText): RecurringItem[] {
   ];
 }
 
-function createNetWorth(text: SeedText) {
+type Portfolio = Pick<AppData, "instruments" | "investmentTransactions">;
+
+function createPortfolio(): Portfolio {
+  const now = today();
+  const on = (offset: number, day: number) => dateInMonth(addMonths(currentMonth(), offset), day);
+  const usd = (amount: number) => ({ amount, currency: "USD" });
+  const eur = (amount: number) => ({ amount, currency: "EUR" });
+  const operations: InvestmentTransaction[] = [];
+  const add = (op: Omit<TradeOperation, "id" | "note" | "eur"> | Omit<DividendOperation, "id" | "note" | "eur">, withholdingSpain = 0) => {
+    if (op.date > now) return;
+    const id = `inv-op-${operations.length + 1}`;
+    operations.push(
+      op.type === "dividend"
+        ? { ...op, id, note: "", eur: proposeDividendEur(op, withholdingSpain) }
+        : { ...op, id, note: "", eur: proposeTradeEur(op) },
+    );
+  };
+  const trade = (type: "buy" | "sell", instrumentId: string, date: string, quantity: number, unitPrice: number, eurRate: number, fee: Fee) =>
+    add({ type, instrumentId, date, quantity, unitPrice, eurRate, fee });
+  const dividend = (instrumentId: string, date: string, gross: number, originRate: number, eurRate: number) =>
+    add(
+      { type: "dividend", instrumentId, date, gross, withholdingOrigin: Math.round(gross * originRate * 100) / 100, eurRate, fee: eur(0) },
+      Math.round(gross * eurRate * 0.19 * 100) / 100,
+    );
+
+  trade("buy", "inv-vwce", on(-14, 6), 20, 98.4, 1, eur(2));
+  trade("buy", "inv-vwce", on(-8, 6), 15, 108.2, 1, eur(2));
+  trade("buy", "inv-vwce", on(-2, 6), 10, 121.5, 1, eur(2));
+
+  trade("buy", "inv-aapl", on(-18, 12), 15, 172.5, 0.92, usd(1));
+  [-10, -7, -4, -1].forEach((offset) => dividend("inv-aapl", on(offset, 15), 3.75, 0.15, 0.87));
+  trade("sell", "inv-aapl", on(0, 1), 5, 228.4, 0.86, usd(1));
+
+  trade("buy", "inv-itx", on(-20, 3), 40, 33.1, 1, eur(3));
+  dividend("inv-itx", on(-6, 2), 30.8, 0, 1);
+  trade("sell", "inv-itx", on(-3, 20), 40, 47.9, 1, eur(3));
+
+  const instruments: Instrument[] = [
+    { id: "inv-vwce", ticker: "VWCE", name: "Vanguard FTSE All-World", currency: "EUR", color: PALETTE[0], price: { value: 126.3, eurRate: 1, date: now } },
+    { id: "inv-aapl", ticker: "AAPL", name: "Apple", currency: "USD", color: PALETTE[3], price: { value: 231.2, eurRate: 0.865, date: now } },
+    { id: "inv-itx", ticker: "ITX", name: "Inditex", currency: "EUR", color: PALETTE[2], price: { value: 52.4, eurRate: 1, date: now } },
+  ];
+  return { instruments, investmentTransactions: operations };
+}
+
+function createNetWorth(text: SeedText, portfolio: Portfolio) {
   const names = text.accounts;
   const accounts: Account[] = [
     { id: "acc-checking", name: names.checking, kind: "asset", balance: 3180 },
     { id: "acc-savings", name: names.savings, kind: "asset", balance: 6050 },
-    { id: "acc-index", name: names.index, kind: "asset", balance: 12480 },
     { id: "acc-car", name: names.car, kind: "asset", balance: 9000 },
     { id: "acc-car-loan", name: names.carLoan, kind: "liability", balance: 6200 },
     { id: "acc-credit-card", name: names.creditCard, kind: "liability", balance: 420 },
   ];
-  const { assets, liabilities } = netWorthTotals(accounts);
+  const { assets, liabilities } = netWorthTotals(accounts, portfolioValue(portfolio));
   const netWorthHistory = Array.from({ length: 6 }, (_, i) => {
     const offset = i - 5;
     return {
@@ -141,8 +198,9 @@ function createNetWorth(text: SeedText) {
 
 export function createSeedData(text: SeedText): AppData {
   const month = currentMonth();
+  const portfolio = createPortfolio();
   return {
-    version: 1,
+    version: 2,
     categories: seedCategories(text),
     transactions: createTransactions(text),
     budgets: { ...BUDGETS } as Record<string, number>,
@@ -152,6 +210,7 @@ export function createSeedData(text: SeedText): AppData {
       { id: "goal-laptop", name: text.goals.laptop, target: 1800, saved: 600, deadline: `${addMonths(month, 4)}-15`, color: "#6366f1" },
     ],
     recurring: createRecurring(text),
-    ...createNetWorth(text),
+    ...createNetWorth(text, portfolio),
+    ...portfolio,
   };
 }

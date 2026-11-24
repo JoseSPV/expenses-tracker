@@ -2,6 +2,7 @@ import { canonicalizeDate } from "@/lib/domain/dates";
 import type { AppData } from "@/lib/domain/types";
 import type { SeedText } from "@/i18n/types";
 import { documentForVisit, emptyAppData } from "./document-for-visit";
+import { upgradeDocument } from "./document-version";
 import { hasLegacyData, migrateLegacyData } from "./legacy-migration";
 import { createSeedData } from "./seed";
 
@@ -22,25 +23,14 @@ function storageKey(): string {
   return accountEmail === null ? TRIAL_KEY : `expenses-tracker:account:v1:${accountEmail}`;
 }
 
-function isAppData(value: unknown): value is AppData {
-  const candidate = value as AppData;
-  return (
-    typeof candidate === "object" &&
-    candidate !== null &&
-    candidate.version === 1 &&
-    [candidate.categories, candidate.transactions, candidate.goals, candidate.recurring, candidate.accounts, candidate.netWorthHistory].every(Array.isArray) &&
-    typeof candidate.budgets === "object"
-  );
-}
-
 function readKey(key: string): AppData | null {
   const raw = localStorage.getItem(key);
   if (!raw) return null;
   try {
-    const parsed: unknown = JSON.parse(raw);
-    if (isAppData(parsed)) {
-      parsed.transactions.forEach((t) => (t.date = canonicalizeDate(t.date)));
-      return parsed;
+    const document = upgradeDocument(JSON.parse(raw));
+    if (document) {
+      document.transactions.forEach((t) => (t.date = canonicalizeDate(t.date)));
+      return document;
     }
   } catch {
     // Fall through: keep a copy instead of silently overwriting what the user had.

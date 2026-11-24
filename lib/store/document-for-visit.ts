@@ -2,7 +2,7 @@ import type { AppData } from "@/lib/domain/types";
 
 export function emptyAppData(): AppData {
   return {
-    version: 1,
+    version: 2,
     categories: [],
     transactions: [],
     budgets: {},
@@ -10,6 +10,8 @@ export function emptyAppData(): AppData {
     recurring: [],
     accounts: [],
     netWorthHistory: [],
+    instruments: [],
+    investmentTransactions: [],
   };
 }
 

@@ -1,8 +1,23 @@
 import { canonicalizeDate, currentMonth, isISODate, nextDueDate, today } from "@/lib/domain/dates";
 import { roundMoney } from "@/lib/domain/money";
-import { categoryUsage, netWorthTotals } from "@/lib/domain/selectors";
-import type { Account, AppData, Category, CategoryType, Goal, ISODate, RecurringItem, Transaction } from "@/lib/domain/types";
+import { nextPaletteColor } from "@/lib/domain/palette";
+import { hasOversold } from "@/lib/domain/portfolio";
+import { categoryUsage, netWorthTotals, portfolioValue } from "@/lib/domain/selectors";
+import type {
+  Account,
+  AppData,
+  Category,
+  CategoryType,
+  Goal,
+  ISODate,
+  Instrument,
+  InstrumentPrice,
+  InvestmentTransaction,
+  RecurringItem,
+  Transaction,
+} from "@/lib/domain/types";
 import type { SeedText } from "@/i18n/types";
+import { deleteVersioned, saveVersioned } from "@/lib/books/investments";
 import { saveTransaction as saveMovement } from "@/lib/books/transactions";
 import { replaceData, updateData } from "./app-store";
 import { emptyAppData } from "./document-for-visit";
@@ -188,7 +203,7 @@ export type AccountInput = Omit<Account, "id">;
 /** Keeps the current month's snapshot in sync so history survives month rollover. */
 function recordSnapshot(d: AppData): void {
   const month = currentMonth();
-  const { assets, liabilities } = netWorthTotals(d.accounts);
+  const { assets, liabilities } = netWorthTotals(d.accounts, portfolioValue(d));
   d.netWorthHistory = [...d.netWorthHistory.filter((snapshot) => snapshot.month !== month), { month, assets, liabilities }];
 }
 
@@ -205,6 +220,120 @@ export const deleteAccount = (id: string) =>
   updateData((d) => {
     d.accounts = remove(d.accounts, id);
     recordSnapshot(d);
+  });
+
+// Investments
+
+/** `oversold`: a sale would be left without shares. `conflict`: someone saved a newer version first. */
+export type InvestmentSaveResult = "saved" | "invalid" | "duplicate" | "oversold" | "conflict";
+
+export type InstrumentInput = Pick<Instrument, "ticker" | "name" | "currency">;
+
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+
+export type InvestmentOperationInput = DistributiveOmit<InvestmentTransaction, "id" | "version">;
+
+const isAmount = (value: number) => Number.isFinite(value) && value >= 0;
+const isPositive = (value: number) => Number.isFinite(value) && value > 0;
+
+/** Runs a write that can fail for a reason the view needs to tell apart. */
+function investmentWrite(recipe: (d: AppData) => InvestmentSaveResult): InvestmentSaveResult {
+  let result: InvestmentSaveResult = "invalid";
+  updateData((d) => {
+    result = recipe(d);
+    if (result !== "saved") return false;
+    recordSnapshot(d);
+  });
+  return result;
+}
+
+export const saveInstrument = (input: InstrumentInput, id?: string, expectedVersion = 1): InvestmentSaveResult =>
+  investmentWrite((d) => {
+    const ticker = input.ticker.trim().toLocaleUpperCase("es");
+    const name = input.name.trim();
+    const currency = input.currency.trim().toUpperCase();
+    if (!ticker || !name || !/^[A-Z]{3}$/.test(currency)) return "invalid";
+    if (d.instruments.some((instrument) => instrument.id !== id && instrument.ticker.toLocaleUpperCase("es") === ticker)) return "duplicate";
+    if (!id) {
+      const color = nextPaletteColor(d.instruments.map((instrument) => instrument.color));
+      d.instruments.push({ id: newId(), ticker, name, currency, color, version: 1 });
+      return "saved";
+    }
+    const existing = d.instruments.find((instrument) => instrument.id === id);
+    if (!existing) return "invalid";
+    // The stored original amounts are in this currency; changing it would misread every one of them.
+    const used = d.investmentTransactions.some((op) => op.instrumentId === id);
+    const result = saveVersioned(d.instruments, { ...existing, ticker, name, currency: used ? existing.currency : currency }, expectedVersion);
+    if (!result.ok) return "missing" in result ? "invalid" : "conflict";
+    d.instruments = result.items;
+    return "saved";
+  });
+
+export const setInstrumentPrice = (id: string, price: InstrumentPrice, expectedVersion = 1): InvestmentSaveResult =>
+  investmentWrite((d) => {
+    const existing = d.instruments.find((instrument) => instrument.id === id);
+    const date = cleanDate(price.date);
+    const eurRate = existing?.currency === "EUR" ? 1 : price.eurRate;
+    if (!existing || !date || !isPositive(price.value) || !isPositive(eurRate)) return "invalid";
+    const result = saveVersioned(d.instruments, { ...existing, price: { value: price.value, eurRate, date } }, expectedVersion);
+    if (!result.ok) return "missing" in result ? "invalid" : "conflict";
+    d.instruments = result.items;
+    return "saved";
+  });
+
+/** Also deletes the instrument's operations. */
+export const deleteInstrument = (id: string, expectedVersion = 1): InvestmentSaveResult =>
+  investmentWrite((d) => {
+    const result = deleteVersioned(d.instruments, id, expectedVersion);
+    if (!result.ok) return "conflict";
+    d.instruments = result.items;
+    d.investmentTransactions = d.investmentTransactions.filter((op) => op.instrumentId !== id);
+    return "saved";
+  });
+
+const roundEur = <T extends Record<string, number>>(eur: T): T =>
+  Object.fromEntries(Object.entries(eur).map(([key, value]) => [key, roundMoney(value)])) as T;
+
+function cleanOperation(input: InvestmentOperationInput, instrument: Instrument): InvestmentOperationInput | null {
+  const date = cleanDate(input.date);
+  const eurRate = instrument.currency === "EUR" ? 1 : input.eurRate;
+  const feeCurrencyOk = input.fee.currency === "EUR" || input.fee.currency === instrument.currency;
+  if (!date || !isPositive(eurRate) || !isAmount(input.fee.amount) || !feeCurrencyOk) return null;
+  if (!Object.values(input.eur).every(isAmount)) return null;
+  const common = { instrumentId: instrument.id, date, eurRate, fee: { ...input.fee }, note: input.note.trim() };
+  if (input.type === "dividend") {
+    if (!isPositive(input.gross) || !isAmount(input.withholdingOrigin) || input.withholdingOrigin > input.gross) return null;
+    return { ...common, type: "dividend", gross: input.gross, withholdingOrigin: input.withholdingOrigin, eur: roundEur(input.eur) };
+  }
+  if (!isPositive(input.quantity) || !isPositive(input.unitPrice) || !isPositive(input.eur.gross)) return null;
+  return { ...common, type: input.type, quantity: input.quantity, unitPrice: input.unitPrice, eur: roundEur(input.eur) };
+}
+
+export const saveInvestmentOperation = (input: InvestmentOperationInput, id?: string, expectedVersion = 1): InvestmentSaveResult =>
+  investmentWrite((d) => {
+    const existing = id ? d.investmentTransactions.find((op) => op.id === id) : undefined;
+    // An operation stays with its instrument; moving it would replay two FIFO histories at once.
+    const instrumentId = existing?.instrumentId ?? input.instrumentId;
+    const instrument = d.instruments.find((item) => item.id === instrumentId);
+    const operation = instrument ? cleanOperation({ ...input, instrumentId }, instrument) : null;
+    if (!operation || (id && !existing)) return "invalid";
+    if (!id) {
+      d.investmentTransactions.push({ ...operation, id: newId(), version: 1 } as InvestmentTransaction);
+    } else {
+      const result = saveVersioned(d.investmentTransactions, { ...operation, id } as InvestmentTransaction, expectedVersion);
+      if (!result.ok) return "missing" in result ? "invalid" : "conflict";
+      d.investmentTransactions = result.items;
+    }
+    return hasOversold(d.investmentTransactions, instrumentId) ? "oversold" : "saved";
+  });
+
+export const deleteInvestmentOperation = (id: string, expectedVersion = 1): InvestmentSaveResult =>
+  investmentWrite((d) => {
+    const existing = d.investmentTransactions.find((op) => op.id === id);
+    const result = deleteVersioned(d.investmentTransactions, id, expectedVersion);
+    if (!result.ok) return "conflict";
+    d.investmentTransactions = result.items;
+    return existing && hasOversold(d.investmentTransactions, existing.instrumentId) ? "oversold" : "saved";
   });
 
 // Whole dataset

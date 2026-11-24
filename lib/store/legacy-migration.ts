@@ -91,7 +91,7 @@ export function migrateLegacyData(storage: Storage, seed: SeedText): AppData {
   }
 
   return {
-    version: 1,
+    version: 2,
     categories: [...byName.values(), ...seedCategories(seed, INCOME_CATEGORY_IDS)],
     transactions,
     budgets,
@@ -99,5 +99,7 @@ export function migrateLegacyData(storage: Storage, seed: SeedText): AppData {
     recurring: [],
     accounts: [],
     netWorthHistory: [],
+    instruments: [],
+    investmentTransactions: [],
   };
 }

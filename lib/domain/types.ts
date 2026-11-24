@@ -62,8 +62,67 @@ export interface NetWorthSnapshot {
   liabilities: number;
 }
 
+/** ISO 4217 code, e.g. `EUR`, `USD`. */
+export type CurrencyCode = string;
+
+export interface InstrumentPrice {
+  /** In the instrument's currency. */
+  value: number;
+  /** EUR per 1 unit of the instrument's currency. */
+  eurRate: number;
+  date: ISODate;
+}
+
+export interface Instrument {
+  id: string;
+  ticker: string;
+  name: string;
+  currency: CurrencyCode;
+  color: string;
+  /** Entered by hand. Missing means the position has no market value. */
+  price?: InstrumentPrice;
+  version?: number;
+}
+
+export interface Fee {
+  amount: number;
+  /** `EUR` or the instrument's currency, as on the broker statement. */
+  currency: CurrencyCode;
+}
+
+interface InvestmentOperationBase {
+  id: string;
+  instrumentId: string;
+  date: ISODate;
+  /** EUR per 1 unit of the instrument's currency on that day. */
+  eurRate: number;
+  fee: Fee;
+  note: string;
+  version?: number;
+}
+
+/** Original amounts are in the instrument's currency. `eur` is fixed when saved and is the figure every calculation uses. */
+export interface TradeOperation extends InvestmentOperationBase {
+  type: "buy" | "sell";
+  quantity: number;
+  unitPrice: number;
+  eur: { gross: number; fee: number };
+}
+
+/** Spanish withholding is applied in EUR by the broker, so it has no original amount. */
+export interface DividendOperation extends InvestmentOperationBase {
+  type: "dividend";
+  gross: number;
+  withholdingOrigin: number;
+  eur: { gross: number; withholdingOrigin: number; withholdingSpain: number; fee: number };
+}
+
+export type InvestmentTransaction = TradeOperation | DividendOperation;
+
+export type InvestmentOperationType = InvestmentTransaction["type"];
+
 export interface AppData {
-  version: 1;
+  version: 2;
   categories: Category[];
   transactions: Transaction[];
   budgets: Budgets;
@@ -71,4 +130,6 @@ export interface AppData {
   recurring: RecurringItem[];
   accounts: Account[];
   netWorthHistory: NetWorthSnapshot[];
+  instruments: Instrument[];
+  investmentTransactions: InvestmentTransaction[];
 }

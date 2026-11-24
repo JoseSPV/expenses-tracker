@@ -1,4 +1,5 @@
 import { addDays, addMonths, currentMonth, today } from "./dates";
+import { portfolioSummary } from "./portfolio";
 import { sum } from "./sum";
 import type { Account, AppData, Category, CategoryType, MonthKey, RecurringItem, Transaction } from "./types";
 
@@ -67,8 +68,13 @@ export function upcomingRecurring(data: AppData, days = 30): RecurringItem[] {
     .sort((a, b) => a.nextDate.localeCompare(b.nextDate));
 }
 
-export function netWorthTotals(accounts: Account[]) {
-  const assets = sum(accounts.filter((a) => a.kind === "asset"), (a) => a.balance);
+/** Market value of the open positions; a position without a price counts at cost. */
+export const portfolioValue = (data: Pick<AppData, "instruments" | "investmentTransactions">): number =>
+  portfolioSummary(data.instruments, data.investmentTransactions).valueEur;
+
+/** `portfolio` is a computed asset, not an editable account. */
+export function netWorthTotals(accounts: Account[], portfolio = 0) {
+  const assets = sum(accounts.filter((a) => a.kind === "asset"), (a) => a.balance) + portfolio;
   const liabilities = sum(accounts.filter((a) => a.kind === "liability"), (a) => a.balance);
   return { assets, liabilities, net: assets - liabilities };
 }
