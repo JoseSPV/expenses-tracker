@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   Calculator,
+  ChartCandlestick,
   CircleUser,
   Database,
   LayoutDashboard,
@@ -29,6 +30,7 @@ export const NAV_ITEMS: NavItem[] = [
   { segment: "goals", labelKey: "goals", icon: Target, usesMonth: false },
   { segment: "bills", labelKey: "bills", icon: Repeat, usesMonth: false },
   { segment: "net-worth", labelKey: "netWorth", icon: TrendingUp, usesMonth: false },
+  { segment: "investments", labelKey: "investments", icon: ChartCandlestick, usesMonth: false },
   { segment: "calculators", labelKey: "calculators", icon: Calculator, usesMonth: false },
   { segment: "categories", labelKey: "categories", icon: Tags, usesMonth: false },
 ];

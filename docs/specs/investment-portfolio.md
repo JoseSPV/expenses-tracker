@@ -45,7 +45,8 @@ interface Instrument {
   id: string;
   ticker: string;            // único en el libro, sin distinguir mayúsculas
   name: string;
-  currency: string;          // "EUR", "USD"…
+  currency: string;          // "EUR", "USD"…; fija en cuanto tiene operaciones
+  color: string;             // de la paleta, al crearlo
   price?: { value: number; eurRate: number; date: ISODate };
   version?: number;
 }
@@ -74,7 +75,7 @@ type InvestmentTransaction =
 Todas las reglas usan las cifras `eur` guardadas, nunca `eurRate` × original.
 
 - **Lote.** Cada compra crea un lote. Coste de adquisición = `eur.gross + eur.fee`.
-- **Venta FIFO.** La venta consume los lotes más antiguos primero, en orden de fecha y, si hay empate, de id. Valor de transmisión = `eur.gross − eur.fee`. Plusvalía = transmisión − coste de los lotes consumidos. Un lote consumido a medias reparte su coste proporcionalmente.
+- **Venta FIFO.** La venta consume los lotes más antiguos primero, en orden de fecha. El mismo día, las compras van antes que las ventas; después decide el id. Valor de transmisión = `eur.gross − eur.fee`. Plusvalía = transmisión − coste de los lotes consumidos. Un lote consumido a medias reparte su coste proporcionalmente.
 - **Venta imposible.** Vender más de lo que hay en esa fecha es `invalid`. También lo es editar o borrar una compra si deja una venta posterior sin acciones.
 - **Posición.** Acciones vivas, coste vivo en EUR y coste medio = coste / acciones. Valor = acciones × `price.value` × `price.eurRate`. Ganancia latente = valor − coste.
 - **Sin precio.** Se muestran «sin precio», el valor y la latente vacíos, y en los totales cuenta a coste, marcado como tal.
@@ -83,6 +84,7 @@ Todas las reglas usan las cifras `eur` guardadas, nunca `eurRate` × original.
 - **Año.** Ventas y dividendos con fecha en ese año natural. Total realizado = plusvalías − minusvalías + dividendos netos.
 - **Redondeo.** Al céntimo, en EUR, por operación, antes de sumar.
 - **Cantidades.** Decimales permitidos (fondos, fracciones). Todo importe es ≥ 0; las cantidades y precios, > 0.
+- **Valor y operación.** Una operación no cambia de valor al editarla. La divisa de un valor no cambia si ya tiene operaciones: sus importes originales están en ella.
 
 Fuera de reglas, pero visible en la interfaz: la app no aplica la regla de los dos meses de las minusvalías ni compensa las retenciones en origen. No es un borrador de la declaración.
 
@@ -97,10 +99,10 @@ Ruta `/[lang]/investments`, entrada «Inversiones» en el menú, sin selector de
 - `DonutChart` de reparto por valor.
 - Posiciones cerradas plegadas, con su resultado realizado total.
 
-**Pestaña Año** (`?view=year&year=2026`, por defecto el año actual)
+**Pestaña Por año** (`?view=year&year=2026`, por defecto el año actual)
 
 - Tarjetas: plusvalías, minusvalías, dividendos netos (con bruto y retenciones debajo), total realizado.
-- `BarChart` mensual: dividendos netos y resultado de ventas.
+- `BarChart` mensual, barras agrupadas: dividendos netos y resultado de ventas.
 - Tabla de ventas: fecha, valor, acciones, valor de transmisión, coste de adquisición FIFO (con las fechas de los lotes), resultado. Todo en EUR, y el importe original con su divisa al lado.
 - Dividendos agrupados por valor.
 

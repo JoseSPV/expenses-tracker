@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { LineChart } from "@/components/charts/line-chart";
@@ -9,7 +10,7 @@ import { EmptyState, Kpi, KpiGrid } from "@/components/ui/indicators";
 import { ViewSkeleton } from "@/components/ui/view-skeleton";
 import { useI18n } from "@/i18n/i18n-provider";
 import { currentMonth } from "@/lib/domain/dates";
-import { netWorthTotals } from "@/lib/domain/selectors";
+import { netWorthTotals, portfolioValue } from "@/lib/domain/selectors";
 import { sum } from "@/lib/domain/sum";
 import type { Account, AccountKind, AppData } from "@/lib/domain/types";
 import { useAppData } from "@/lib/store/use-app-data";
@@ -17,16 +18,44 @@ import { AccountFormDialog } from "./account-form-dialog";
 
 type Editing = { account?: Account; kind: AccountKind } | null;
 
-/** Stored history with the current month replaced by live account totals. */
-function historyWithCurrent(data: AppData) {
+/** Stored history with the current month replaced by live totals. */
+function historyWithCurrent(data: AppData, portfolio: number) {
   const month = currentMonth();
-  const { assets, liabilities } = netWorthTotals(data.accounts);
+  const { assets, liabilities } = netWorthTotals(data.accounts, portfolio);
   return [...data.netWorthHistory.filter((s) => s.month !== month), { month, assets, liabilities }].sort((a, b) =>
     a.month.localeCompare(b.month),
   );
 }
 
-function AccountList({ title, empty, accounts, onAdd, onEdit }: { title: string; empty: string; accounts: Account[]; onAdd: () => void; onEdit: (account: Account) => void }) {
+function PortfolioRow({ value }: { value: number }) {
+  const { dict, format, locale } = useI18n();
+  return (
+    <Link href={`/${locale}/investments`} className="flex w-full items-center gap-3 rounded-[10px] px-2 py-2.5 hover:bg-surface-2">
+      <span className="flex min-w-0 flex-1 flex-col">
+        <strong className="truncate font-semibold">{dict.netWorth.portfolio}</strong>
+        <small className="text-[13px] text-muted">{dict.netWorth.portfolioHint}</small>
+      </span>
+      <span className="font-semibold tabular-nums">{format.money(value)}</span>
+    </Link>
+  );
+}
+
+function AccountList({
+  title,
+  empty,
+  accounts,
+  portfolio = 0,
+  onAdd,
+  onEdit,
+}: {
+  title: string;
+  empty: string;
+  accounts: Account[];
+  /** Shown as a computed row when above zero. */
+  portfolio?: number;
+  onAdd: () => void;
+  onEdit: (account: Account) => void;
+}) {
   const { dict, format } = useI18n();
   return (
     <Card>
@@ -39,7 +68,8 @@ function AccountList({ title, empty, accounts, onAdd, onEdit }: { title: string;
           </Button>
         }
       />
-      {accounts.length === 0 ? (
+      {portfolio > 0 ? <PortfolioRow value={portfolio} /> : null}
+      {accounts.length === 0 && portfolio <= 0 ? (
         <EmptyState>{empty}</EmptyState>
       ) : (
         accounts.map((account) => (
@@ -56,7 +86,7 @@ function AccountList({ title, empty, accounts, onAdd, onEdit }: { title: string;
       )}
       <div className="mt-4 flex justify-between border-t pt-3 font-semibold">
         <span>{dict.common.total}</span>
-        <span className="tabular-nums">{format.money(sum(accounts, (a) => a.balance))}</span>
+        <span className="tabular-nums">{format.money(sum(accounts, (a) => a.balance) + portfolio)}</span>
       </div>
     </Card>
   );
@@ -70,8 +100,9 @@ export function NetWorthView() {
 
   if (!data) return <ViewSkeleton />;
 
-  const { assets, liabilities, net } = netWorthTotals(data.accounts);
-  const history = historyWithCurrent(data);
+  const portfolio = portfolioValue(data);
+  const { assets, liabilities, net } = netWorthTotals(data.accounts, portfolio);
+  const history = historyWithCurrent(data, portfolio);
   const previous = history.at(-2);
   const change = previous ? net - (previous.assets - previous.liabilities) : 0;
   const ofKind = (kind: AccountKind) => data.accounts.filter((a) => a.kind === kind);
@@ -109,6 +140,7 @@ export function NetWorthView() {
           title={text.assets}
           empty={text.noAssets}
           accounts={ofKind("asset")}
+          portfolio={portfolio}
           onAdd={() => setEditing({ kind: "asset" })}
           onEdit={(account) => setEditing({ account, kind: account.kind })}
         />

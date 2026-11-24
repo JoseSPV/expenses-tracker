@@ -20,13 +20,32 @@ export function createFormatters(locale: Locale, dict: Dictionary) {
     maximumFractionDigits: 1,
   });
   const percent = new Intl.NumberFormat(tag, { style: "percent", maximumFractionDigits: 0 });
+  const signedPercent = new Intl.NumberFormat(tag, { style: "percent", maximumFractionDigits: 1, signDisplay: "exceptZero" });
+  const signedCurrency = new Intl.NumberFormat(tag, { style: "currency", currency: CURRENCY, useGrouping: "always", signDisplay: "exceptZero" });
   const decimal = new Intl.NumberFormat(tag, { maximumFractionDigits: 1 });
+  const quantity = new Intl.NumberFormat(tag, { maximumFractionDigits: 6 });
+  const foreign = new Map<string, Intl.NumberFormat>();
+  const foreignCurrency = (code: string) => {
+    let formatter = foreign.get(code);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat(tag, { style: "currency", currency: code, useGrouping: "always", maximumFractionDigits: 4 });
+      foreign.set(code, formatter);
+    }
+    return formatter;
+  };
   const relative = new Intl.RelativeTimeFormat(tag, { numeric: "auto" });
   const pluralRules = new Intl.PluralRules(tag);
   const capitalize = (text: string) => text.charAt(0).toLocaleUpperCase(tag) + text.slice(1);
 
   return {
     money: (amount: number) => currency.format(amount),
+    /** `+12,00 €` / `−3,00 €`, for gains and losses. */
+    signedMoney: (amount: number) => signedCurrency.format(amount),
+    /** An amount in the currency it was paid in, e.g. `228,40 US$`. */
+    foreignMoney: (amount: number, code: string) => foreignCurrency(code).format(amount),
+    /** Share counts and exchange rates: up to 6 decimals. */
+    quantity: (value: number) => quantity.format(value),
+    signedPercent: (ratio: number) => signedPercent.format(Number.isFinite(ratio) ? ratio : 0),
     compactMoney: (amount: number) => compactCurrency.format(amount),
     /** `ratio` is a fraction: 0.45 → "45 %". */
     percent: (ratio: number) => percent.format(Number.isFinite(ratio) ? ratio : 0),
