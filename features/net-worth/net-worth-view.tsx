@@ -114,7 +114,7 @@ export function NetWorthView() {
           label={text.netWorth}
           value={format.money(net)}
           tone={net >= 0 ? "positive" : "negative"}
-          hint={previous ? format.message(text.vsLastMonth, { amount: `${change >= 0 ? "+" : ""}${format.money(change)}` }) : undefined}
+          hint={previous ? format.message(text.vsLastMonth, { amount: format.signedMoney(change) }) : undefined}
         />
         <Kpi label={text.assets} value={format.money(assets)} />
         <Kpi label={text.liabilities} value={format.money(liabilities)} />

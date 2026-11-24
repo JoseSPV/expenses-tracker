@@ -123,7 +123,9 @@
     "name": "Nombre",
     "color": "Color",
     "category": "Categoría",
-    "notSaved": "No se ha podido guardar. Revisa los datos."
+    "notSaved": "No se ha podido guardar. Revisa los datos.",
+    "chartValue": "{label}: {value}",
+    "chartPoint": "{period} · {series}: {value}"
   },
   "data": {
     "title": "Gestionar datos",
@@ -213,7 +215,7 @@
     "empty": "Aún no hay presupuestos. Ponle un límite a alguna categoría.",
     "left": "Te quedan {amount}",
     "overBy": "Te has pasado {amount}",
-    "expectedPace": "Lo que tocaría llevar hoy",
+    "paceValue": "{spent} gastado. A estas alturas del mes tocaría llevar {pace}",
     "unbudgeted": "Gastos sin presupuesto",
     "setBudget": "Poner presupuesto",
     "newTitle": "Nuevo presupuesto",
@@ -349,7 +351,7 @@
     "back": "Volver a la cartera",
     "missing": "Este valor ya no existe.",
     "position": "Títulos",
-    "averageCost": "Coste medio",
+    "averageCost": "Coste medio: {amount}",
     "realized": "Resultado de ventas",
     "dividendsTotal": "Dividendos cobrados",
     "updatePrice": "Actualizar precio",

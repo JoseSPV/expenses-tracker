@@ -7,7 +7,7 @@ import { useChartWidth } from "./use-chart-width";
 
 /** Grouped bars; every series' `values` aligns with `labels`. */
 export function BarChart({ label, labels, series, height = 240 }: { label: string; labels: string[]; series: ChartSeries[]; height?: number }) {
-  const { format } = useI18n();
+  const { dict, format } = useI18n();
   const { ref, width } = useChartWidth();
   const { y, ticks, baseline } = createScale(series.flatMap((s) => s.values), height);
   const groupWidth = (width - PAD.left - PAD.right) / labels.length;
@@ -27,7 +27,7 @@ export function BarChart({ label, labels, series, height = 240 }: { label: strin
             rx={3}
             style={{ fill: s.color }}
           >
-            <title>{`${name} · ${s.name}: ${format.money(s.values[i])}`}</title>
+            <title>{format.message(dict.common.chartPoint, { period: name, series: s.name, value: format.money(s.values[i]) })}</title>
           </rect>
         )),
       )}

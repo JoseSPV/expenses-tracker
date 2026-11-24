@@ -55,7 +55,7 @@ function BudgetRowItem({ row, name, color, pace, onEdit }: { row: BudgetRow; nam
         ratio={row.ratio}
         status={row.status}
         marker={pace > 0 && pace < 1 ? pace : undefined}
-        markerLabel={text.expectedPace}
+        valueText={pace > 0 && pace < 1 ? format.message(text.paceValue, { spent: format.percent(row.ratio), pace: format.percent(pace) }) : undefined}
       />
       <div className="flex justify-between text-[13px] text-muted">
         {row.remaining < 0 ? (

@@ -131,7 +131,7 @@ export function InstrumentView({ instrumentId }: { instrumentId: string }) {
       </div>
 
       <KpiGrid>
-        <Kpi label={text.position} value={format.quantity(position.quantity)} hint={position.quantity > 0 ? `${text.averageCost} ${format.money(position.averageCostEur)}` : undefined} />
+        <Kpi label={text.position} value={format.quantity(position.quantity)} hint={position.quantity > 0 ? format.message(text.averageCost, { amount: format.money(position.averageCostEur) }) : undefined} />
         <Kpi
           label={text.colPrice}
           value={instrument.price ? format.foreignMoney(instrument.price.value, instrument.currency) : text.noPrice}

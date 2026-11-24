@@ -45,14 +45,14 @@ export function Progress({
   status = "ok",
   color,
   marker,
-  markerLabel,
+  valueText,
   label,
 }: {
   ratio: number;
   status?: BudgetStatus;
   color?: string;
   marker?: number;
-  markerLabel?: string;
+  valueText?: string;
   label: string;
 }) {
   const percent = Math.round(ratio * 100);
@@ -63,7 +63,7 @@ export function Progress({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={percent}
-      aria-valuetext={marker !== undefined && markerLabel ? `${percent}%. ${markerLabel}` : undefined}
+      aria-valuetext={valueText}
       className="relative h-2 rounded-full bg-surface-2"
     >
       <span

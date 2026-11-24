@@ -9,7 +9,7 @@ const MAX_POINTS = 24;
 
 /** Multi-line chart with a soft area under the first series. */
 export function LineChart({ label, labels, series, height = 240 }: { label: string; labels: string[]; series: ChartSeries[]; height?: number }) {
-  const { format } = useI18n();
+  const { dict, format } = useI18n();
   const { ref, width } = useChartWidth();
   const { y, ticks, baseline } = createScale(series.flatMap((s) => s.values), height);
   const innerWidth = width - PAD.left - PAD.right;
@@ -29,7 +29,7 @@ export function LineChart({ label, labels, series, height = 240 }: { label: stri
             {labels.length <= MAX_POINTS
               ? s.values.map((v, i) => (
                   <circle key={i} cx={x(i)} cy={y(v)} r={4} strokeWidth={2} className="stroke-surface" style={{ fill: s.color }}>
-                    <title>{`${labels[i]} · ${s.name}: ${format.money(v)}`}</title>
+                    <title>{format.message(dict.common.chartPoint, { period: labels[i], series: s.name, value: format.money(v) })}</title>
                   </circle>
                 ))
               : null}

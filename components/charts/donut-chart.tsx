@@ -21,7 +21,7 @@ export function DonutChart({
   size?: number;
   thickness?: number;
 }) {
-  const { format } = useI18n();
+  const { dict, format } = useI18n();
   const total = segments.reduce((acc, s) => acc + s.value, 0);
   const center = size / 2;
   const radius = (size - thickness) / 2;
@@ -32,7 +32,7 @@ export function DonutChart({
   );
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${label} ${value}`} className="mx-auto block h-auto w-full max-w-50">
+    <svg viewBox={`0 0 ${size} ${size}`} role="img" aria-label={format.message(dict.common.chartValue, { label, value })} className="mx-auto block h-auto w-full max-w-50">
       <g fill="none" strokeWidth={thickness} transform={`rotate(-90 ${center} ${center})`}>
         <circle cx={center} cy={center} r={radius} className="stroke-surface-2" />
         {segments.map((s, i) => {
@@ -47,7 +47,7 @@ export function DonutChart({
               strokeDasharray={`${length} ${circumference - length}`}
               strokeDashoffset={-offsets[i]}
             >
-              <title>{`${s.label}: ${format.money(s.value)}`}</title>
+              <title>{format.message(dict.common.chartValue, { label: s.label, value: format.money(s.value) })}</title>
             </circle>
           );
         })}
