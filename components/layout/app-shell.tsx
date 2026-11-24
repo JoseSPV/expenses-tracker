@@ -96,7 +96,8 @@ function MonthPicker() {
   );
 }
 
-export function AppShell({ children, person }: { children: ReactNode; person: Person | null }) {
+/** `notice` sits above every section, for messages that are not about the section itself. */
+export function AppShell({ children, person, notice }: { children: ReactNode; person: Person | null; notice?: ReactNode }) {
   const { locale, dict } = useI18n();
   const pathname = usePathname();
   const active = activeNavItem(pathname, locale);
@@ -147,6 +148,7 @@ export function AppShell({ children, person }: { children: ReactNode; person: Pe
               </div>
             </header>
             <main className="max-w-7xl px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:px-8 md:pb-12">
+              {account ? notice : null}
               {children}
             </main>
           </div>

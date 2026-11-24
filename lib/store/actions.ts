@@ -19,8 +19,9 @@ import type {
 } from "@/lib/domain/types";
 import type { SeedText } from "@/i18n/types";
 import { deleteVersioned, saveVersioned } from "@/lib/books/investments";
+import { importTrialData, type TrialImportResult } from "@/lib/books/trial-import";
 import { saveTransaction as saveMovement } from "@/lib/books/transactions";
-import { replaceData, updateData } from "./app-store";
+import { peekData, readTrialDocument, replaceData, updateData } from "./app-store";
 import { emptyAppData } from "./document-for-visit";
 import { createSeedData } from "./seed";
 
@@ -337,3 +338,12 @@ export const deleteInvestmentOperation = (id: string, expectedVersion = 1): Inve
 // Whole dataset
 
 export const loadDemoData = (seed: SeedText) => replaceData(createSeedData(seed));
+
+/** Copies this browser's trial into the signed-in account in one write. */
+export function importTrial(): TrialImportResult["result"] {
+  const current = peekData();
+  if (!current) return "nothing";
+  const outcome = importTrialData(current, readTrialDocument());
+  if (outcome.result === "imported") replaceData(outcome.data);
+  return outcome.result;
+}

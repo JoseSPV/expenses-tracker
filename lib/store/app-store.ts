@@ -100,6 +100,19 @@ export function updateData(recipe: (draft: AppData) => boolean | void): boolean 
   return true;
 }
 
+/** The trial document as stored, without seeding. Null without a session: the trial is then the visit itself. */
+export function readTrialDocument(): AppData | null {
+  return accountEmail === null ? null : readKey(TRIAL_KEY);
+}
+
+const dismissKey = () => `${storageKey()}:trial-import-dismissed`;
+
+export const isTrialImportDismissed = (): boolean => accountEmail !== null && localStorage.getItem(dismissKey()) === "1";
+
+export function dismissTrialImport(): void {
+  if (accountEmail !== null) localStorage.setItem(dismissKey(), "1");
+}
+
 export function replaceData(next: AppData): void {
   data = next;
   persist();

@@ -255,7 +255,9 @@ Ninguna vista de la nube se queda en blanco. Cada una tiene carga, error, vacío
 
 **Sin sesión.** Perfil, en el grupo Cuenta del menú, dice que no has entrado. Ahí está «Tus libros», que empieza el acceso con Google. Las ocho secciones siguen enseñando la prueba de ese navegador. La cabecera no lleva la sesión ni la gestión de datos.
 
-**Con sesión.** Las ocho secciones se abren igual, vacías. No se enseña la prueba ni un error por no tener libros. Lo anotado con la sesión no se copia desde la prueba ni se mezcla con ella. Hasta que la cuenta lo guarde, ese documento vive en este navegador, en otra clave.
+**Con sesión.** Las ocho secciones se abren igual, vacías. No se enseña la prueba ni un error por no tener libros. Lo anotado con la sesión no se mezcla con la prueba. Hasta que la cuenta lo guarde, ese documento vive en este navegador, en otra clave.
+
+**Importar la prueba.** Si la cuenta está vacía y la prueba de este navegador tiene algo escrito por la persona, un aviso encima de las secciones ofrece copiarla («Importar» o «Ahora no»). Descartado, no vuelve a salir con esa cuenta. En Datos la opción sigue mientras la cuenta esté vacía. Se copia la prueba entera, ejemplos incluidos, en una sola escritura (`importTrialData`); la prueba no cambia. Los ejemplos sin tocar no cuentan como datos propios: tienen ids fijos, y lo creado a mano lleva un UUID o una versión mayor que 1. Con libros en Supabase, la misma operación será la función de servidor de la copia.
 
 **Cada vista con libro.** El esqueleto es de esa vista, no de las demás. Si la petición falla, se muestra el error y un reintento; si ya había una página, se conserva y el aviso dice que no se pudo actualizar. El vacío es el de esa lista (sin movimientos este mes, sin objetivos, sin categorías), no un fallo. Guardar, borrar o aceptar dejan el control en espera hasta la respuesta. Un error de red no se presenta como un conflicto de versión.
 

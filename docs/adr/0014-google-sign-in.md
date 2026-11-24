@@ -25,7 +25,8 @@ Signing in is Google, through Supabase. The trial without an account stays in th
 - The browser receives only the project URL and the publishable key (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`). The URL must be `https://…supabase.co`. A service-role key is refused.
 - Sign-in is limited to `ALLOWED_GOOGLE_EMAILS`, a server-only variable. It is not part of the client bundle. An empty list allows nobody.
 - `features/` does not import the Supabase client. The shell starts sign-in. The server reads who is signed in.
-- A signed-in person sees the eight sections empty. The trial is not shown and is not copied. What they add is stored in this browser, apart from the trial, until the account itself stores it. Invites and deleting the account are not stored yet.
+- A signed-in person sees the eight sections empty. The trial is not shown. What they add is stored in this browser, apart from the trial, until the account itself stores it. Invites and deleting the account are not stored yet.
+- The trial is copied only when the person asks, only into an empty account, and only if it holds something they wrote (demo items have fixed ids; their own get a UUID or a version above 1). The copy is the whole trial in one write. The trial stays as it was. A notice offers it once per account; Datos offers it while the account is empty.
 
 ## Consequences
 

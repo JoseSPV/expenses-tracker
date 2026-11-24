@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { ThemeScript } from "@/components/layout/theme-script";
+import { TrialImportNotice } from "@/features/data/trial-import-notice";
 import { readPerson } from "@/lib/session/person";
 import { ToastProvider } from "@/components/ui/toast";
 import { hasLocale, locales } from "@/i18n/config";
@@ -40,7 +41,9 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
         <ThemeScript />
         <I18nProvider locale={lang} dict={dict}>
           <ToastProvider>
-            <AppShell person={person}>{children}</AppShell>
+            <AppShell person={person} notice={<TrialImportNotice />}>
+              {children}
+            </AppShell>
           </ToastProvider>
         </I18nProvider>
       </body>

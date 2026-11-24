@@ -137,7 +137,15 @@
     "clearAllHint": "Vacía movimientos, categorías, presupuestos, objetivos, recibos, cuentas e inversiones. No se puede deshacer.",
     "clearAllConfirm": "Sí, borrar todo",
     "demoLoaded": "Datos de ejemplo cargados",
-    "allCleared": "Datos borrados"
+    "allCleared": "Datos borrados",
+    "importTitle": "Trae los datos de la prueba",
+    "importNotice": "En este navegador tienes datos de cuando usabas la app sin cuenta. ¿Los copias a tu cuenta?",
+    "importHint": "Copia a tu cuenta, que está vacía, lo que tienes en la prueba de este navegador. Se copia todo, también los ejemplos que no hayas borrado. La prueba se queda como está.",
+    "importAction": "Importar",
+    "importLater": "Ahora no",
+    "imported": "Datos importados",
+    "importNotEmpty": "Tu cuenta ya tiene datos, así que no se ha importado nada.",
+    "importNothing": "En la prueba no hay datos tuyos que importar."
   },
   "dashboard": {
     "income": "Ingresos",
